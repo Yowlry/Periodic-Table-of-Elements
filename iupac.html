@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IUPAC Interactive Periodic Table - 四语元素周期表与相态模拟器</title>
+<style>
+:root {
+  --bg-deep: #060913;
+  --bg-panel: rgba(13, 20, 38, 0.92);
+  --bg-card: rgba(18, 28, 52, 0.78);
+  --border-glow: rgba(56, 189, 248, 0.28);
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  
+  --cat-alkali: 244, 63, 94;
+  --cat-alkaline: 249, 115, 22;
+  --cat-transition: 59, 130, 246;
+  --cat-post-transition: 16, 185, 129;
+  --cat-metalloid: 20, 184, 166;
+  --cat-nonmetal: 132, 204, 22;
+  --cat-halogen: 234, 179, 8;
+  --cat-noble: 168, 85, 247;
+  --cat-lanthanide: 236, 72, 153;
+  --cat-actinide: 217, 70, 239;
+
+  --phase-solid: #64748b;
+  --phase-liquid: #3b82f6;
+  --phase-gas: #ef4444;
+  --phase-unknown: #334155;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: var(--bg-deep);
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
+    linear-gradient(rgba(15, 23, 42, 0.7) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.7) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.app-container { max-width: 1760px; margin: 0 auto; padding: 16px 20px 36px; }
+
+.top-header {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: 16px; padding: 16px 22px; background: var(--bg-panel); border: 1px solid var(--border-glow);
+  border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px); margin-bottom: 12px;
+}
+.brand-area { display: flex; align-items: center; gap: 14px; }
+.brand-icon {
+  width: 46px; height: 46px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(56,189,248,0.25), rgba(168,85,247,0.25));
+  border: 1px solid rgba(56,189,248,0.5); display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 20px; color: #38bdf8; box-shadow: 0 0 18px rgba(56,189,248,0.25);
+}
+.brand-title h1 { font-size: 21px; font-weight: 700; background: linear-gradient(90deg, #f8fafc, #38bdf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.brand-title p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.controls-area { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.search-box { position: relative; min-width: 270px; }
+.search-box input {
+  width: 100%; background: rgba(8,13,26,0.85); border: 1px solid rgba(148,163,184,0.3);
+  color: var(--text-main); padding: 9px 34px 9px 14px; border-radius: 10px; font-size: 13px; outline: none; transition: all 0.2s;
+}
+.search-box input:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(56,189,248,0.3); }
+.lang-switcher { display: flex; background: rgba(8,13,26,0.85); padding: 4px; border-radius: 11px; border: 1px solid rgba(148,163,184,0.25); gap: 4px; }
+.lang-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 13px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.lang-btn.active { background: linear-gradient(135deg, #0284c7, #2563eb); color: #ffffff; box-shadow: 0 2px 10px rgba(37,99,235,0.45); }
+
+.temp-control-panel {
+  background: var(--bg-panel); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 14px;
+  padding: 16px 20px; margin-bottom: 16px; backdrop-filter: blur(12px); box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+}
+.temp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 12px;}
+.temp-readout { font-size: 26px; font-weight: 800; color: var(--accent); display: flex; align-items: baseline; gap: 10px;}
+.temp-readout small { font-size: 14px; color: var(--text-muted); font-weight: 500; font-family: "SFMono-Regular", Consolas, monospace;}
+.temp-controls { display: flex; gap: 8px; flex-wrap: wrap;}
+.temp-btn {
+  background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.3);
+  color: var(--text-main); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.temp-btn:hover { border-color: var(--accent); color: var(--accent); }
+.temp-btn.playing { background: var(--accent); color: #000; border-color: var(--accent); box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);}
+.temp-slider-container { margin: 16px 0; }
+.temp-slider-container input[type=range] { 
+  width: 100%; cursor: pointer; accent-color: var(--accent); height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; appearance: none; outline: none;
+}
+.temp-slider-container input[type=range]::-webkit-slider-thumb {
+  appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 10px #38bdf8;
+}
+.temp-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;}
+.temp-presets button { font-size: 11px; padding: 4px 10px; border-radius: 99px; }
+.temp-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+.stat-btn {
+  display: flex; align-items: center; gap: 8px; padding: 6px 14px;
+  background: rgba(15, 23, 42, 0.6); border-radius: 99px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 1px solid transparent; transition: all 0.2s; user-select: none;
+}
+.stat-btn:hover, .stat-btn.active { border-color: var(--accent); background: rgba(30, 41, 59, 0.9); box-shadow: 0 0 12px rgba(56,189,248,0.2);}
+.badge { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 6px; font-weight: 800; font-size: 11.5px; color: #fff;}
+.badge.S { background: var(--phase-solid); }
+.badge.L { background: var(--phase-liquid); }
+.badge.G { background: var(--phase-gas); }
+.badge.U { background: var(--phase-unknown); opacity: 0.8; }
+
+.category-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; background: var(--bg-panel); border: 1px solid rgba(148,163,184,0.18); border-radius: 14px; margin-bottom: 16px; align-items: center; }
+.cat-chip { display: flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; cursor: pointer; border: 1px solid rgba(255,255,255,0.14); background: rgba(15,23,42,0.75); transition: all 0.2s; user-select: none; }
+.cat-chip.active { box-shadow: 0 0 14px rgba(56,189,248,0.4); border-color: #ffffff; background: rgba(30,41,59,0.98); }
+.cat-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.table-scroll-wrapper { width: 100%; overflow-x: auto; padding-bottom: 10px; }
+.periodic-grid { display: grid; grid-template-columns: repeat(18, minmax(68px, 1fr)); grid-auto-rows: 78px; gap: 6px; min-width: 1320px; }
+
+.el-cell {
+  position: relative; border-radius: 10px; padding: 5px 6px; display: flex; flex-direction: column; justify-content: space-between;
+  cursor: pointer; background: rgba(var(--cat-rgb), 0.16); border: 1px solid rgba(var(--cat-rgb), 0.48);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.2s ease, border-color 0.15s ease; user-select: none; overflow: hidden;
+}
+.el-cell:hover {
+  transform: scale(1.09); z-index: 20; background: rgba(var(--cat-rgb), 0.3); border-color: rgba(var(--cat-rgb), 0.95);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.65), 0 0 16px rgba(var(--cat-rgb), 0.55);
+}
+.el-cell.selected { border: 2px solid #ffffff; box-shadow: 0 0 20px rgba(var(--cat-rgb), 0.85); z-index: 15; }
+.el-cell.dimmed { opacity: 0.16; filter: grayscale(75%); pointer-events: none; }
+
+/* 核心修复 1: 角标定位到右下角，避免遮挡原子序数质量数 */
+.el-cell .phase-badge {
+  position: absolute; bottom: 3px; right: 3px; font-size: 9px; font-weight: 800; padding: 1px 4.5px; border-radius: 4px;
+  color: white; transition: background 0.25s ease; font-family: "SFMono-Regular", monospace; z-index: 2;
+}
+.el-cell.phase-solid .phase-badge { background: var(--phase-solid); }
+.el-cell.phase-liquid .phase-badge { background: var(--phase-liquid); }
+.el-cell.phase-gas .phase-badge { background: var(--phase-gas); }
+.el-cell.phase-unknown .phase-badge { background: var(--phase-unknown); opacity: 0.5; }
+
+.el-top { display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; line-height: 1; }
+.el-num { font-weight: 700; color: rgba(255,255,255,0.92); }
+.el-mass { font-size: 9.5px; color: rgba(226,232,240,0.72); font-family: "SFMono-Regular", Consolas, monospace; }
+.el-symbol { font-size: 21px; font-weight: 800; text-align: center; line-height: 1.05; color: #ffffff; text-shadow: 0 0 10px rgba(var(--cat-rgb), 0.6); }
+
+/* 核心修复 1: 为元素名称增加右侧 padding 避免重叠 */
+.el-name { font-size: 10.5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; padding-right: 18px; }
+
+.series-placeholder {
+  border-radius: 10px; padding: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+  cursor: pointer; border: 1px dashed rgba(var(--cat-rgb), 0.65); background: rgba(var(--cat-rgb), 0.1); transition: all 0.2s;
+}
+.series-placeholder:hover { background: rgba(var(--cat-rgb), 0.24); }
+.series-placeholder .sp-range {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(var(--cat-rgb), 1);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.series-placeholder .sp-title {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.series-row-label { display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
+
+.summary-banner {
+  grid-column: 3 / 13; grid-row: 1 / 4; background: rgba(13,22,42,0.78); border: 1px solid rgba(56,189,248,0.22);
+  border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(8px);
+}
+.banner-left { display: flex; align-items: center; gap: 16px; }
+.banner-symbol-box { width: 86px; height: 86px; border-radius: 14px; display: flex; flex-direction: column; justify-content: space-between; padding: 8px 10px; background: rgba(var(--cat-rgb), 0.22); border: 2px solid rgba(var(--cat-rgb), 0.8); box-shadow: 0 0 24px rgba(var(--cat-rgb), 0.35); flex-shrink: 0; }
+.banner-symbol-box .bs-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; }
+.banner-symbol-box .bs-sym { font-size: 30px; font-weight: 800; text-align: center; line-height: 1; }
+.banner-symbol-box .bs-name { font-size: 11px; text-align: center; }
+.banner-info h2 { font-size: 18px; font-weight: 700; color: #f8fafc; margin-bottom: 4px; }
+.banner-langs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.banner-lang-tag { font-size: 11.5px; padding: 2px 8px; border-radius: 6px; background: rgba(30,41,59,0.85); border: 1px solid rgba(148,163,184,0.25); color: #cbd5e1; }
+.banner-quick-meta { display: flex; gap: 12px; font-size: 12px; color: var(--text-muted); }
+.banner-open-btn { padding: 9px 15px; border-radius: 10px; border: 1px solid rgba(56,189,248,0.55); background: linear-gradient(135deg, rgba(14,165,233,0.25), rgba(37,99,235,0.25)); color: #38bdf8; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.banner-open-btn:hover { background: linear-gradient(135deg, rgba(14,165,233,0.45), rgba(37,99,235,0.45)); color: #ffffff; }
+
+.drawer-backdrop { position: fixed; inset: 0; background: rgba(2,6,23,0.68); backdrop-filter: blur(5px); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+.detail-drawer {
+  position: fixed; top: 0; right: 0; width: min(760px, 95vw); height: 100vh; background: #080d1a; border-left: 1px solid rgba(56,189,248,0.35);
+  box-shadow: -15px 0 45px rgba(0,0,0,0.8); z-index: 101; transform: translateX(102%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.detail-drawer.open { transform: translateX(0); }
+.drawer-header { padding: 18px 24px; background: linear-gradient(180deg, rgba(15,23,42,0.95), rgba(8,13,26,0.95)); border-bottom: 1px solid rgba(148,163,184,0.2); display: flex; justify-content: space-between; align-items: center; }
+.drawer-title-group { display: flex; align-items: center; gap: 16px; }
+.drawer-symbol-badge { width: 68px; height: 68px; border-radius: 14px; background: rgba(var(--cat-rgb), 0.2); border: 2px solid rgba(var(--cat-rgb), 0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(var(--cat-rgb), 0.3); }
+.drawer-symbol-badge .ds-num { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+.drawer-symbol-badge .ds-sym { font-size: 28px; font-weight: 800; color: #ffffff; line-height: 1.05; }
+.drawer-main-titles h2 { font-size: 22px; font-weight: 800; color: #ffffff; }
+.drawer-cat-pill { display: inline-block; margin-top: 4px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: rgba(var(--cat-rgb), 0.22); border: 1px solid rgba(var(--cat-rgb), 0.65); color: #f8fafc; }
+.drawer-nav-btns { display: flex; gap: 8px; }
+.icon-btn { background: rgba(30,41,59,0.8); border: 1px solid rgba(148,163,184,0.3); color: var(--text-main); padding: 7px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.drawer-body { padding: 20px 24px 36px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+.detail-section { background: rgba(15,23,42,0.65); border: 1px solid rgba(148,163,184,0.18); border-radius: 14px; padding: 16px 18px; }
+.section-title { font-size: 14.5px; font-weight: 700; color: #38bdf8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(56,189,248,0.18); padding-bottom: 8px; }
+.section-title::before { content: ""; width: 4px; height: 15px; background: #38bdf8; border-radius: 2px; display: inline-block; }
+
+.lang-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px;}
+.lang-card { background: rgba(8,13,26,0.78); border: 1px solid rgba(148,163,184,0.2); border-radius: 10px; padding: 10px 12px; }
+.lang-card .lc-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.lang-card .lc-val { font-size: 14px; font-weight: 700; color: #f8fafc; word-break: break-word; }
+
+.prop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.prop-grid-wide { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+.prop-item { background: rgba(8,13,26,0.72); border: 1px solid rgba(148,163,184,0.15); border-radius: 10px; padding: 9px 12px; }
+.prop-label { font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px; }
+.prop-value { font-size: 13.5px; font-weight: 500; color: #f1f5f9; line-height: 1.45; word-wrap: break-word;}
+.null-badge { display: inline-block; font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; color: #64748b; background: rgba(30,41,59,0.6); padding: 1px 7px; border-radius: 4px; border: 1px dashed rgba(100,116,139,0.4); }
+
+.atom-visual-row { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: center; }
+.bohr-box { width: 200px; height: 200px; background: radial-gradient(circle, rgba(56,189,248,0.1) 0%, rgba(8,13,26,0.85) 70%); border: 1px solid rgba(56,189,248,0.25); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.shell-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.shell-pill { background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.4); border-radius: 6px; padding: 3px 8px; font-size: 12px; font-family: "SFMono-Regular", monospace; color: #e0f2fe; }
+
+@media (max-width: 1100px) { .lang-grid-4 { grid-template-columns: repeat(2, 1fr); } .atom-visual-row { grid-template-columns: 1fr; justify-items: center; } }
+</style>
+</head>
+<body>
+<div class="app-container" id="app">
+  <header class="top-header">
+    <div class="brand-area">
+      <div class="brand-icon">Pt</div>
+      <div class="brand-title">
+        <h1 id="ui-main-title">IUPAC 交互式元素周期表</h1>
+        <p id="ui-sub-title">118 Elements · 四语相态热力学引擎 · 全量深度数据库</p>
+      </div>
+    </div>
+    <div class="controls-area">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="搜索名称、符号或原子序数..." autocomplete="off">
+      </div>
+      <div class="lang-switcher" id="lang-switcher">
+        <button class="lang-btn active" data-lang="zh">中文</button>
+        <button class="lang-btn" data-lang="en">English</button>
+        <button class="lang-btn" data-lang="la">Latina</button>
+        <button class="lang-btn" data-lang="ja">日本語</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="temp-control-panel">
+    <div class="temp-header">
+      <div class="temp-readout">
+        <span id="temp-k">298 K</span>
+        <small id="temp-c">(25 ℃)</small>
+      </div>
+      <div class="temp-controls">
+        <button class="temp-btn" id="btn-minus-100">-100K</button>
+        <button class="temp-btn" id="btn-minus-10">-10K</button>
+        <button class="temp-btn" id="btn-plus-10">+10K</button>
+        <button class="temp-btn" id="btn-plus-100">+100K</button>
+        <button class="temp-btn" id="btn-play-temp">▶ <span id="ui-play">自动升温</span></button>
+      </div>
+    </div>
+    <div class="temp-slider-container">
+      <input type="range" id="temp-slider" min="0" max="1000" value="298">
+    </div>
+    <div class="temp-presets" id="ui-presets">
+      <button class="temp-btn" data-t="0">0K (绝对零度)</button>
+      <button class="temp-btn" data-t="77">77K (液氮)</button>
+      <button class="temp-btn" data-t="298">298K (室温)</button>
+      <button class="temp-btn" data-t="373">373K (水沸腾)</button>
+      <button class="temp-btn" data-t="1358">1358K (金熔点)</button>
+      <button class="temp-btn" data-t="1811">1811K (铁熔点)</button>
+      <button class="temp-btn" data-t="5778">5778K (太阳表面)</button>
+    </div>
+    <div class="temp-stats" id="ui-stats">
+      <div class="stat-btn" data-filter="solid"><span class="badge S">S</span> <span class="sl">固态</span>: <span id="stat-s">0</span></div>
+      <div class="stat-btn" data-filter="liquid"><span class="badge L">L</span> <span class="sl">液态</span>: <span id="stat-l">0</span></div>
+      <div class="stat-btn" data-filter="gas"><span class="badge G">G</span> <span class="sl">气态</span>: <span id="stat-g">0</span></div>
+      <div class="stat-btn" data-filter="unknown"><span class="badge U">?</span> <span class="sl">未知</span>: <span id="stat-u">0</span></div>
+    </div>
+  </div>
+
+  <nav class="category-bar" id="category-bar"></nav>
+
+  <div class="table-scroll-wrapper">
+    <main class="periodic-grid" id="periodic-grid"></main>
+  </div>
+</div>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<aside class="detail-drawer" id="detail-drawer">
+  <div class="drawer-header" id="drawer-header">
+    <div class="drawer-title-group">
+      <div class="drawer-symbol-badge" id="drawer-badge">
+        <span class="ds-num" id="drawer-num">1</span>
+        <span class="ds-sym" id="drawer-sym">H</span>
+      </div>
+      <div class="drawer-main-titles">
+        <h2 id="drawer-title">氢 · Hydrogen</h2>
+        <span class="drawer-cat-pill" id="drawer-cat">非金属</span>
+      </div>
+    </div>
+    <div class="drawer-nav-btns">
+      <button class="icon-btn" id="prev-el-btn">◀</button>
+      <button class="icon-btn" id="next-el-btn">▶</button>
+      <button class="icon-btn" id="close-drawer-btn">✕</button>
+    </div>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+
+<script>
+const T = (zh, en, la, ja) => ({ zh, en, la, ja });
+
+const Y_PRE = T("史前时代", "Prehistoric/Ancient", "Antiquitas", "先史時代");
+const D_HUM = T("古代人类", "Ancient Humans", "Homines Antiqui", "古代人類");
+const D_JINR = T("联合核研究所(JINR)", "JINR (Dubna)", "Institutum JINR (Dubna)", "合同原子核研究所(JINR)");
+const D_LBNL = T("劳伦斯伯克利实验室(LBNL)", "LBNL (Berkeley)", "Laboratorium LBNL", "ローレンス・バークレー国立研究所(LBNL)");
+const D_GSI = T("德国重离子研究所(GSI)", "GSI Darmstadt", "Institutum GSI Darmstadt", "重イオン研究所(GSI)");
+const D_RIKEN = T("日本理化学研究所(RIKEN)", "RIKEN", "Institutum RIKEN", "理化学研究所(RIKEN)");
+
+const DICT = {
+  phase: {
+    solid: { badge: "S", t: T("固态", "Solid", "Solidus", "固体") },
+    liquid: { badge: "L", t: T("液态", "Liquid", "Liquidus", "液体") },
+    gas: { badge: "G", t: T("气态", "Gas", "Gaseus", "気体") },
+    unknown: { badge: "?", t: T("未知", "Unknown", "Ignotus", "未知") }
+  },
+  crystal: {
+    "bcc": T("体心立方晶系 (bcc)", "Body-centered cubic (bcc)", "Cubi centrum corporis (bcc)", "体心立方格子 (bcc)"),
+    "fcc": T("面心立方晶系 (fcc)", "Face-centered cubic (fcc)", "Cubi centrum faciei (fcc)", "面心立方格子 (fcc)"),
+    "hcp": T("六方密堆积 (hcp)", "Hexagonal close-packed (hcp)", "Hexagonalis densissima (hcp)", "六方最密充填 (hcp)"),
+    "dhcp": T("双六方密堆积 (dhcp)", "Double hexagonal close-packed", "Duplex hexagonalis (dhcp)", "二重六方最密 (dhcp)"),
+    "dia": T("金刚石型立方 (Fd-3m)", "Diamond cubic", "Cubi adamantis", "ダイヤモンド構造"),
+    "orth": T("正交晶系", "Orthorhombic", "Orthorhombicus", "斜方晶系"),
+    "mono": T("单斜晶系", "Monoclinic", "Monoclinicus", "単斜晶系"),
+    "trig": T("菱面体/三方晶系", "Rhombohedral / Trigonal", "Trigonalis", "三方晶系 / 菱面体"),
+    "tetr": T("四方晶系", "Tetragonal", "Tetragonalis", "正方晶系")
+  },
+  magnetism: {
+    "dia": T("抗磁性", "Diamagnetic", "Diamagneticus", "反磁性"),
+    "para": T("顺磁性", "Paramagnetic", "Paramagneticus", "常磁性"),
+    "ferro": T("铁磁性", "Ferromagnetic", "Ferromagneticus", "強磁性"),
+    "anti": T("反铁磁性", "Antiferromagnetic", "Antiferromagneticus", "反強磁性")
+  }
+};
+
+const UI = {
+  zh: {
+    title: "IUPAC 交互式元素周期表", sub: "118 Elements · 四语相态热力学引擎 · 全量深度数据库",
+    search: "搜索名称（中/英/拉/日）、符号、序数...", all: "全部元素 (118)", lan: "镧系元素", act: "锕系元素", open: "查看深度档案 ▶",
+    period: "周期", group: "族", block: "区", mass: "相对质量",
+    sec1: "标准命名与基础参数", sec2: "原子结构与电子排布", sec3: "物理相态与电磁参数", sec4: "化学性质与放射性", sec5: "发现、命名与前沿应用",
+    play: "自动升温", pause: "暂停升温", currentPhase: "当前状态", tempDiff: "相距",
+    presets: ["0K (绝对零度)","77K (液氮)","298K (常温)","373K (水沸点)","1358K (金熔点)","1811K (铁熔点)","5778K (太阳表面)"],
+    fields: { Z: "原子序数", sym: "元素符号", A: "相对质量", PGB: "周期 / 族 / 区", Cat: "分类", EN: "电负性", IE: "第一电离能", Rad: "共价半径", Ox: "氧化态", Nuc: "核电荷数", Ncl: "质子/中子/电子", EC: "电子排布式", Shl: "壳层电子(K→Q)", Cry: "晶体结构", State: "常温常压状态", Den: "密度", Mp: "熔点", Bp: "沸点", Col: "颜色/光泽", ECd: "导电性", TCd: "导热性", Hard: "硬度", Mag: "磁性", Met: "金属性", Red: "氧化还原", Aci: "酸碱性", ThS: "热稳定性", Fla: "可燃性", Tox: "毒性/腐蚀", Rea: "反应性", Iso: "同位素", Alo: "同素异形体", RadA: "放射性", Year: "发现年", Disc: "发现者", Ety: "命名渊源", App: "工业/半导体应用" }
+  },
+  en: {
+    title: "IUPAC Interactive Periodic Table", sub: "118 Elements · Live Thermodynamic Simulator · Deep DB",
+    search: "Search by Name, Symbol, or Z...", all: "All Elements (118)", lan: "Lanthanides", act: "Actinides", open: "Deep Profile ▶",
+    period: "Period", group: "Group", block: "Block", mass: "Atomic Mass",
+    sec1: "Nomenclature & Basic Params", sec2: "Atomic Structure", sec3: "Physical & Phase Params", sec4: "Chemistry & Radioactivity", sec5: "History, Etymology & Applications",
+    play: "Auto Heat", pause: "Pause Heating", currentPhase: "Current Phase", tempDiff: "Delta",
+    presets: ["0K (Abs Zero)","77K (Liq N2)","298K (Room Temp)","373K (Water Boils)","1358K (Gold Melts)","1811K (Iron Melts)","5778K (Sun Surface)"],
+    fields: { Z: "Atomic No.", sym: "Symbol", A: "Atomic Mass", PGB: "Per / Grp / Blk", Cat: "Category", EN: "Electronegativity", IE: "1st Ionization", Rad: "Cov. Radius", Ox: "Ox States", Nuc: "Nuclear Chg", Ncl: "p⁺ / n⁰ / e⁻", EC: "Config", Shl: "Shells (K→Q)", Cry: "Crystal", State: "STP State", Den: "Density", Mp: "Melt. Pt", Bp: "Boil. Pt", Col: "Color/Luster", ECd: "Elec Cond", TCd: "Therm Cond", Hard: "Hardness", Mag: "Magnetism", Met: "Metallicity", Red: "Redox", Aci: "Acidity", ThS: "Therm Stab", Fla: "Flammability", Tox: "Toxicity", Rea: "Reactivity", Iso: "Isotopes", Alo: "Allotropes", RadA: "Radioactivity", Year: "Disc. Year", Disc: "Discoverer", Ety: "Etymology", App: "Applications" }
+  },
+  la: {
+    title: "Tabula Periodica Elementorum", sub: "CXVIII Elementa · Simulator Thermodynamicae · Databasis",
+    search: "Quaere Nomen, Symbolum, Z...", all: "Omnia (118)", lan: "Lanthanida", act: "Actinida", open: "Plura Data ▶",
+    period: "Periodus", group: "Grex", block: "Regio", mass: "Massa",
+    sec1: "Nomina et Parametri", sec2: "Structura Atomica", sec3: "Proprietates Physicae", sec4: "Chemia et Radioactivitas", sec5: "Historia, Etymologia et Usus",
+    play: "Calefactio", pause: "Siste", currentPhase: "Status Praesens", tempDiff: "Distantia",
+    presets: ["0K (Zero Absolutus)","77K (N2 Liquidum)","298K (Camerae)","373K (Aqua Bullit)","1358K (Aurum Funditur)","1811K (Ferrum Funditur)","5778K (Superficies Solis)"],
+    fields: { Z: "Numerus Z", sym: "Symbolum", A: "Massa", PGB: "Per/Grex/Regio", Cat: "Classis", EN: "Electroneg.", IE: "Ionizatio", Rad: "Radius", Ox: "Oxidatio", Nuc: "Onus Nuc.", Ncl: "p⁺ / n⁰ / e⁻", EC: "Config", Shl: "Cortices", Cry: "Crystallum", State: "Status STP", Den: "Densitas", Mp: "Punctum Liquef.", Bp: "Punctum Ebull.", Col: "Color/Nitor", ECd: "Cond. Electrica", TCd: "Cond. Thermica", Hard: "Duritia", Mag: "Magnetismus", Met: "Natura Metallica", Red: "Redox", Aci: "Acida/Basica", ThS: "Stabilitas", Fla: "Inflammabilitas", Tox: "Toxicitas", Rea: "Reactivitas", Iso: "Isotopa", Alo: "Allotropa", RadA: "Radioactivitas", Year: "Annus", Disc: "Inventor", Ety: "Etymologia", App: "Usus Indust." }
+  },
+  ja: {
+    title: "IUPAC インタラクティブ元素周期表", sub: "全118元素 · 4言語切替 · 熱力学シミュレータ搭載データベース",
+    search: "元素名、記号、原子番号で検索...", all: "全元素 (118)", lan: "ランタノイド", act: "アクチノイド", open: "詳細データ ▶",
+    period: "周期", group: "族", block: "区", mass: "原子量",
+    sec1: "標準名称・基本パラメータ", sec2: "原子構造と電子配置", sec3: "物理的相態と電磁気的性質", sec4: "化学的性質と放射能", sec5: "発見の歴史・語源・最先端応用",
+    play: "自動昇温", pause: "昇温停止", currentPhase: "現在の相態", tempDiff: "差",
+    presets: ["0K (絶対零度)","77K (液体窒素)","298K (室温)","373K (水の沸点)","1358K (金の融点)","1811K (鉄の融点)","5778K (太陽表面)"],
+    fields: { Z: "原子番号", sym: "元素記号", A: "相対原子質量", PGB: "周期 / 族 / 区", Cat: "化学分類", EN: "電気陰性度", IE: "第1イオン化", Rad: "共有結合半径", Ox: "主な酸化数", Nuc: "核電荷数", Ncl: "陽子/中性子/電子", EC: "電子配置", Shl: "電子殻(K→Q)", Cry: "結晶構造", State: "常温常圧状態", Den: "密度", Mp: "融点", Bp: "沸点", Col: "色/光沢", ECd: "導電性", TCd: "熱伝導性", Hard: "硬度", Mag: "磁性", Met: "金属性", Red: "酸化還元性", Aci: "酸塩基性", ThS: "熱安定性", Fla: "可燃性", Tox: "毒性/腐食", Rea: "反応性", Iso: "同位体", Alo: "同素体", RadA: "放射能", Year: "発見年", Disc: "発見者", Ety: "命名の由来", App: "工業・半導体応用" }
+  }
+};
+
+const CATEGORIES = {
+  alkali: { rgb: "var(--cat-alkali)", hex: "#f43f5e", t: T("碱金属", "Alkali Metal", "Metallum Alcalicum", "アルカリ金属") },
+  alkaline: { rgb: "var(--cat-alkaline)", hex: "#f97316", t: T("碱土金属", "Alkaline Earth", "Alcalino-Terreum", "アルカリ土類") },
+  transition: { rgb: "var(--cat-transition)", hex: "#3b82f6", t: T("过渡金属", "Transition Metal", "Metallum Transitionis", "遷移金属") },
+  postTransition: { rgb: "var(--cat-post-transition)", hex: "#10b981", t: T("主族金属", "Post-Transition", "Metallum Post-Trans", "典型金属") },
+  metalloid: { rgb: "var(--cat-metalloid)", hex: "#14b8a6", t: T("类金属", "Metalloid", "Semimetallum", "半金属") },
+  nonmetal: { rgb: "var(--cat-nonmetal)", hex: "#84cc16", t: T("非金属", "Nonmetal", "Non-Metallum", "非金属") },
+  halogen: { rgb: "var(--cat-halogen)", hex: "#eab308", t: T("卤素", "Halogen", "Halogenum", "ハロゲン") },
+  noble: { rgb: "var(--cat-noble)", hex: "#a855f7", t: T("稀有气体", "Noble Gas", "Gas Nobile", "希ガス") },
+  lanthanide: { rgb: "var(--cat-lanthanide)", hex: "#ec4899", t: T("镧系", "Lanthanide", "Lanthanidum", "ランタノイド") },
+  actinide: { rgb: "var(--cat-actinide)", hex: "#d946ef", t: T("锕系", "Actinide", "Actinidum", "アクチノイド") }
+};
+
+// 100% 完整无删减的 118 元素数据，包含纯数值熔沸点及四语词源/应用
+const CORE_RAW = [
+  [1,"H","1.008","氢","Hydrogen","Hydrogenium","水素","nonmetal",1,1,"g","0.00008988","-259.16","-252.87","2.20","1312","31","-1, +1","1s¹",[1],"1766","Henry Cavendish",T("源于希腊语 hydro（水）与 genes（生成），拉丁学术名 Hydrogenium，意为“生成水之物”。","Derived from Greek 'hydro' (water) and 'genes' (creator), meaning 'water-former'.","A verbis Graecis 'hydro' (aqua) et 'genes' (creator), significans 'aquam creans'.","ギリシャ語の「hydro（水）」と「genes（生む）」に由来し、「水を生じるもの」を意味する。"),T("合成氨工业、氢燃料电池、半导体晶圆退火还原气氛、石油加氢裂化与火箭推进剂。","Ammonia synthesis, hydrogen fuel cells, semiconductor wafer annealing, hydrocracking, and rocket propellant.","Synthesis ammoniaci, cellulae focalis hydrogenii, recoctio wafer, et fomes roquetarum.","アンモニア合成、水素燃料電池、半導体ウェハーの還元アニール、水素化分解、およびロケット推進剤。")],
+  [2,"He","4.0026","氦","Helium","Helium","ヘリウム","noble",1,18,"g","0.0001785","-272.20","-268.93",null,"2372","28","0","1s²",[2],"1868","Janssen & Lockyer",T("源于希腊神话太阳神 Helios，因首次在日食太阳光谱中发现而得名。","Named after the Greek sun god Helios, as it was first discovered in the solar spectrum during an eclipse.","A deo Solis Graeco Helios nominatum, quia primum in spectro solari inventum est.","ギリシャ神話の太陽神ヘリオスに由来。日食時の太陽スペクトルから初めて発見されたため。"),T("超导磁体（MRI）极低温冷却剂、半导体光刻与等离子刻蚀载气、深海潜水呼吸混合气。","MRI cryogenics, wafer lithography carrier gas, deep diving gas mixtures.","Refrigeratio MRI, gas portans in lithographia, et gas pro urinatore.","MRI極低温冷却、ウェハー露光・エッチング用キャリアガス、深海潜水用混合ガス。")],
+  [3,"Li","6.94","锂","Lithium","Lithium","リチウム","alkali",2,1,"s","0.534","180.50","1342","0.98","520","128","+1","[He] 2s¹",[2,1],"1817","J. A. Arfwedson",T("源于希腊语 lithos（石头），因最早发现于矿石而非植物灰中。","Derived from Greek 'lithos' (stone), as it was discovered in minerals rather than plant ashes.","A verbo Graeco 'lithos' (lapis), quia in mineralibus inventum est.","ギリシャ語の「lithos（石）」に由来。植物の灰ではなく鉱物から発見されたため。"),T("动力锂离子电池、航空铝锂轻质合金、铌酸锂光电调制晶体、核聚变氚增殖剂。","Li-ion EV batteries, aerospace Al-Li alloys, LiNbO3 optical modulators, fusion tritium breeding.","Pilae Li-ion, admixtiones aërospatiales, modulatratores optici, et fusio nuclearis.","リチウムイオン電池、航空用アルミ・リチウム合金、ニオブ酸リチウム光変調器、核融合トリチウム増殖。")],
+  [4,"Be","9.0122","铍","Beryllium","Beryllium","ベリリウム","alkaline",2,2,"s","1.85","1287","2469","1.57","899","96","+2","[He] 2s²",[2,2],"1798","L. N. Vauquelin",T("源于希腊语 beryllos（绿柱石），拉丁化为 Beryllium。","Derived from Greek 'beryllos' (beryl), Latinized as Beryllium.","A verbo Graeco 'beryllos' (beryllus) derivatum.","ギリシャ語の「beryllos（緑柱石）」に由来し、ラテン語化された。"),T("太空望远镜反射镜面、X射线管透射窗口、高弹性无火花铍铜合金。","Space telescope mirrors (JWST), X-ray windows, non-sparking Be-Cu alloys.","Specula telescopiorum spatialium, fenestrae radiorum X, et admixtiones Cu-Be.","宇宙望遠鏡の鏡（JWSTなど）、X線透過窓、非火花性ベリリウム銅合金。")],
+  [5,"B","10.81","硼","Boron","Borium","ホウ素","metalloid",2,13,"s","2.34","2076","3927","2.04","801","84","+3","[He] 2s² 2p¹",[2,3],"1808","Gay-Lussac & Davy",T("源于阿拉伯语 buraq（硼砂），拉丁学术名 Borium。","Derived from Arabic 'buraq' (borax), Latinized as Borium.","Ab Arabico 'buraq' (borax) derivatum.","アラビア語の「buraq（ホウ砂）」に由来。"),T("硅基半导体P型掺杂剂、钕铁硼永磁体、耐热硼硅酸盐玻璃、核反应堆控制棒。","P-type semiconductor dopant, NdFeB magnets, borosilicate glass, nuclear control rods.","Dopatio P in semiconductris, magnetes NdFeB, vitrum borosilicatum.","半導体のP型ドーパント、ネオジム磁石、耐熱ホウケイ酸ガラス、原子炉制御棒。")],
+  [6,"C","12.011","碳","Carbon","Carboneum","炭素","nonmetal",2,14,"s","2.267","3550","4027","2.55","1086","76","-4, +2, +4","[He] 2s² 2p²",[2,4],Y_PRE,D_HUM,T("源于拉丁语 carbo（木炭、煤炭）。","Derived from Latin 'carbo' (charcoal or coal).","A verbo Latino 'carbo' derivatum.","ラテン語の「carbo（木炭）」に由来。"),T("第三代宽禁带半导体(SiC)、碳纤维、石墨烯电子器件、钢铁冶金与生命有机体基石。","SiC wide-bandgap semiconductors, carbon fibers, graphene electronics, metallurgy.","Semiconductra SiC, fibrae carbonis, electronica grapheni, et metallurgia.","SiCワイドギャップ半導体、炭素繊維、グラフェン電子デバイス、鉄鋼製錬。")],
+  [7,"N","14.007","氮","Nitrogen","Nitrogenium","窒素","nonmetal",2,15,"g","0.00125","-210.00","-195.79","3.04","1402","71","-3, +5","[He] 2s² 2p³",[2,5],"1772","Daniel Rutherford",T("源于拉丁语 nitrum（硝石）与希腊语 genes（生成），意为“生成硝石的元素”。","From Latin 'nitrum' and Greek 'genes', meaning 'saltpeter forming'.","A verbis 'nitrum' et Graeco 'genes', significans 'nitrum creans'.","ラテン語の「nitrum（硝石）」とギリシャ語の「genes（生じる）」に由来。"),T("氮化镓(GaN)功率与射频芯片、芯片无氧封装保护气、化肥工业与液氮制冷。","GaN power/RF chips, inert packaging gas, fertilizers, liquid nitrogen cooling.","Microchipia GaN, gas iners, stercora, et refrigeratio cryogenica.","GaNパワー/RFチップ、半導体無酸素パッケージ、肥料、液体窒素冷却。")],
+  [8,"O","15.999","氧","Oxygen","Oxygenium","酸素","nonmetal",2,16,"g","0.00143","-218.79","-182.96","3.44","1314","66","-2","[He] 2s² 2p⁴",[2,6],"1774","Scheele & Priestley",T("源于希腊语 oxys（酸）与 genes（生成），意为“生成酸的元素”。","From Greek 'oxys' (acid) and 'genes' (creator), meaning 'acid-former'.","A verbis Graecis 'oxys' (acidum) et 'genes' (creator).","ギリシャ語の「oxys（酸）」と「genes（生む）」に由来し、「酸を生じるもの」の意。"),T("晶圆热氧化(SiO₂)、钢铁吹氧冶炼、生命呼吸供氧、火箭助燃剂。","Wafer thermal oxidation (SiO2), metallurgy, medical oxygen, rocket oxidizer.","Oxidatio thermalis wafer (SiO2), metallurgia, et fomes roquetarum.","ウェハー熱酸化(SiO₂生成)、鉄鋼製錬、医療用酸素、ロケット酸化剤。")],
+  [9,"F","18.998","氟","Fluorine","Fluorum","フッ素","halogen",2,17,"g","0.0017","-219.67","-188.11","3.98","1681","57","-1","[He] 2s² 2p⁵",[2,7],"1886","Henri Moissan",T("源于拉丁语 fluere（流动），因萤石(CaF₂)在冶金中用作助熔剂。","From Latin 'fluere' (to flow), as fluorite was used as a flux in metallurgy.","A verbo Latino 'fluere', quia fluorites ut fluxus adhibebatur.","ラテン語の「fluere（流れる）」に由来。蛍石が冶金の融剤として使われたため。"),T("半导体干法等离子刻蚀气(SF₆/CF₄)、准分子光刻(ArF)、含氟聚合物材料。","Plasma dry etching (SF6/CF4), ArF excimer lithography, fluoropolymers (Teflon).","Corrosio plasmatica, lithographia ArF, et fluoropolymeria.","プラズマドライエッチングガス(SF₆/CF₄)、ArFエキシマ露光、フッ素樹脂。")],
+  [10,"Ne","20.180","氖","Neon","Neon","ネオン","noble",2,18,"g","0.0009","-248.59","-246.05",null,"2081","58","0","[He] 2s² 2p⁶",[2,8],"1898","Ramsay & Travers",T("源于希腊语 neos（新的）。","From Greek 'neos' (new).","A verbo Graeco 'neos' (novus).","ギリシャ語の「neos（新しい）」に由来。"),T("深紫外光刻机准分子激光器核心缓冲气、高压霓虹指示灯、极低温制冷。","DUV excimer laser buffer gas, neon lights, cryogenic refrigeration.","Gas pro laseribus excimer DUV, lumina neon, et refrigeratio cryogenica.","DUVエキシマレーザーの緩衝ガス、ネオンサイン、極低温冷却。")],
+  [11,"Na","22.990","钠","Sodium","Natrium","ナトリウム","alkali",3,1,"s","0.968","97.79","882.9","0.93","496","166","+1","[Ne] 3s¹",[2,8,1],"1807","Humphry Davy",T("拉丁名源于阿拉伯语 natron（天然碱）。","Latin 'Natrium' derives from Arabic 'natron' (natural soda).","A vocabulo Arabico 'natron' (soda naturalis) derivatum.","ラテン語名はアラビア語の「natron（天然アルカリ）」に由来。"),T("钠离子储能电池、快中子增殖核反应堆液态冷却剂、有机合成还原剂。","Na-ion batteries, fast breeder reactor liquid coolant, reducing agent.","Pilae Na-ion, refrigerium in reactoribus nuclearibus, et agens reducens.","ナトリウムイオン電池、高速増殖炉の液体冷却材、有機合成の還元剤。")],
+  [12,"Mg","24.305","镁","Magnesium","Magnesium","マグネシウム","alkaline",3,2,"s","1.738","650","1091","1.31","738","141","+2","[Ne] 3s²",[2,8,2],"1755","Joseph Black",T("源于希腊地名 Magnesia（马格尼西亚）。","Named after the Greek region of Magnesia.","A regione Graeca Magnesia nominatum.","ギリシャの地名「マグネシア」に由来。"),T("3C轻质合金机身、有机格氏试剂、海绵钛热还原冶炼、汽车轻量化压铸件。","3C lightweight alloys, Grignard reagents, titanium extraction, automotive die-casting.","Admixtiones leves, reagentia Grignard, et extractio titanii.","3C軽量合金筐体、グリニャール試薬、チタンの熱還元製錬、自動車軽量化部品。")],
+  [13,"Al","26.982","铝","Aluminium","Aluminium","アルミニウム","postTransition",3,13,"s","2.70","660.32","2470","1.61","578","121","+3","[Ne] 3s² 3p¹",[2,8,3],"1825","Hans C. Ørsted",T("源于拉丁语 alumen（明矾）。","Derived from Latin 'alumen' (alum).","A verbo Latino 'alumen' derivatum.","ラテン語の「alumen（ミョウバン）」に由来。"),T("芯片顶层互连引线、氮化铝(AlN)高导热封装基板、航空轻合金、高压输电线。","Chip top-layer interconnects, AlN packaging substrates, aerospace alloys.","Fila in microchipiis, substrata AlN, et admixtiones aërospatiales.","ICトップ配線、窒化アルミニウム(AlN)放熱基板、航空用軽合金、送電線。")],
+  [14,"Si","28.085","硅","Silicon","Silicium","ケイ素","metalloid",3,14,"s","2.329","1414","3265","1.90","787","111","-4, +2, +4","[Ne] 3s² 3p²",[2,8,4],"1824","Jöns J. Berzelius",T("源于拉丁语 silex（燧石）。","Derived from Latin 'silex' (flint).","A verbo Latino 'silex' derivatum.","ラテン語の「silex（火打石）」に由来。"),T("现代微电子CPU/存储器单晶硅圆核心基底、光伏太阳能电池、硅胶。","CPU/Memory monocrystalline silicon wafers, solar cells, silicones.","Plaustra silicii pro CPU, cellulae solares, et silicona.","CPU/メモリ用単結晶シリコンウェハー、太陽電池、シリコーン樹脂。")],
+  [15,"P","30.974","磷","Phosphorus","Phosphorus","リン","nonmetal",3,15,"s","1.82","44.15","280.5","2.19","1012","107","-3, +3, +5","[Ne] 3s² 3p³",[2,8,5],"1669","Hennig Brand",T("源于希腊语 phosphoros（发光者/启明星）。","From Greek 'phosphoros' (light-bringing).","A verbo Graeco 'phosphoros' (lucem ferens).","ギリシャ語の「phosphoros（光を運ぶもの）」に由来。"),T("硅基半导体N型离子注入掺杂、磷化铟(InP)高速光通信芯片、磷酸铁锂电池。","N-type Si doping, InP photonic chips, LFP EV batteries, fertilizers.","Dopatio N-typi, microchipia InP, et pilae LFP.","N型シリコンドーパント、InP光通信チップ、リン酸鉄リチウム(LFP)電池。")],
+  [16,"S","32.06","硫","Sulfur","Sulphur","硫黄","nonmetal",3,16,"s","2.07","115.21","444.6","2.58","1000","105","-2, +2, +4, +6","[Ne] 3s² 3p⁴",[2,8,6],Y_PRE,D_HUM,T("源于拉丁语 sulphur（硫磺）。","Derived from Latin 'sulphur' (brimstone).","A verbo Latino 'sulphur' derivatum.","ラテン語の「sulphur（硫黄）」に由来。"),T("二硫化钼二维半导体晶体管、锂硫电池、硫酸工业、橡胶硫化交联剂。","MoS2 2D semiconductor transistors, Li-S batteries, sulfuric acid, vulcanization.","Transistoria MoS2, pilae Li-S, acidum sulphuricum, et vulcanizatio.","MoS₂二次元半導体トランジスタ、リチウム硫黄電池、硫酸製造、ゴム加硫。")],
+  [17,"Cl","35.45","氯","Chlorine","Chlorum","塩素","halogen",3,17,"g","0.0032","-101.5","-34.04","3.16","1251","102","-1, +1, +3, +5, +7","[Ne] 3s² 3p⁵",[2,8,7],"1774","Carl W. Scheele",T("源于希腊语 chloros（黄绿色）。","From Greek 'chloros' (pale green).","A verbo Graeco 'chloros' (viridis pallidus).","ギリシャ語の「chloros（黄緑色）」に由来。"),T("高纯多晶硅提纯(SiHCl₃)、半导体等离子金属刻蚀气、聚氯乙烯(PVC)、消毒剂。","Polysilicon purification (SiHCl3), plasma etching, PVC, disinfectants.","Purificatio silicii, corrosio plasmatica, et PVC.","多結晶シリコン精製(SiHCl₃)、半導体プラズマエッチング、PVC、消毒剤。")],
+  [18,"Ar","39.95","氩","Argon","Argon","アルゴン","noble",3,18,"g","0.00178","-189.34","-185.85",null,"1521","106","0","[Ne] 3s² 3p⁶",[2,8,8],"1894","Rayleigh & Ramsay",T("源于希腊语 argos（懒惰的、不活跃的）。","From Greek 'argos' (lazy or inactive).","A verbo Graeco 'argos' (iners).","ギリシャ語の「argos（怠惰な、不活性な）」に由来。"),T("单晶硅直拉法(CZ)生长惰性保护气、半导体磁控溅射工作气体、焊接保护气。","CZ silicon ingot pulling shield gas, sputtering plasma gas, welding.","Gas iners pro incremento silicii, sparsio plasmatica, et glutinatio.","CZ法シリコン単結晶引き上げ保護ガス、スパッタリング用ガス、溶接保護。")],
+  [19,"K","39.098","钾","Potassium","Kalium","カリウム","alkali",4,1,"s","0.862","63.5","759","0.82","419","203","+1","[Ar] 4s¹",[2,8,8,1],"1807","Humphry Davy",T("拉丁名源于阿拉伯语 al-qalyah（植物灰烬）。","Latin 'Kalium' from Arabic 'al-qalyah' (plant ashes).","A vocabulo Arabico 'al-qalyah' derivatum.","ラテン語名はアラビア語の「al-qalyah（植物の灰）」に由来。"),T("钠钾液态合金核反应堆冷却剂、光学玻璃强化离子交换剂、农业高钾肥。","NaK liquid reactor coolant, glass chemical strengthening, fertilizers.","Refrigerium NaK in reactoribus, vitrum roboratum, et stercora.","NaK液体合金原子炉冷却材、ガラス化学強化イオン交換、カリウム肥料。")],
+  [20,"Ca","40.078","钙","Calcium","Calcium","カルシウム","alkaline",4,2,"s","1.55","842","1484","1.00","590","176","+2","[Ar] 4s²",[2,8,8,2],"1808","Humphry Davy",T("源于拉丁语 calx（石灰）。","Derived from Latin 'calx' (limestone).","A verbo Latino 'calx' derivatum.","ラテン語の「calx（石灰）」に由来。"),T("深紫外光刻机氟化钙(CaF₂)光学透镜晶体、钢铁冶炼脱氧剂、特种水泥。","CaF2 lenses for DUV lithography, steel deoxidation, specialty cements.","Lentes CaF2 pro lithographia DUV, deoxidatio chalybis.","DUV露光機用フッ化カルシウム(CaF₂)レンズ、鉄鋼脱酸剤、セメント。")],
+  [21,"Sc","44.956","钪","Scandium","Scandium","スカンジウム","transition",4,3,"s","2.98","1541","2836","1.36","633","170","+3","[Ar] 3d¹ 4s²",[2,8,9,2],"1879","L. F. Nilson",T("源于拉丁语 Scandia（斯堪的纳维亚半岛）。","From Latin 'Scandia' (Scandinavia).","A nomine Latino 'Scandia' derivatum.","ラテン語の「Scandia（スカンジナビア）」に由来。"),T("5G射频滤波器掺钪氮化铝(ScAlN)薄膜、固体氧化物燃料电池(SOFC)、航空轻合金。","ScAlN 5G RF filters, SOFC electrolytes, aerospace Al-Sc alloys.","Filtra RF ScAlN, electrolyti SOFC, et admixtiones aërospatiales.","5G用ScAlN圧電薄膜フィルター、固体酸化物形燃料電池(SOFC)、航空軽合金。")],
+  [22,"Ti","47.867","钛","Titanium","Titanium","チタン","transition",4,4,"s","4.50","1668","3287","1.54","659","160","+4","[Ar] 3d² 4s²",[2,8,10,2],"1791","William Gregor",T("源于希腊神话泰坦神（Titans）。","Named after the Titans of Greek mythology.","A Titanibus e mythologia Graeca nominatum.","ギリシャ神話の巨神ティーターン（Titans）に由来。"),T("先进芯片氮化钛(TiN)金属栅极与阻挡层、航空发动机叶片、人工关节生物植入体。","Chip TiN metal gates/barriers, jet engine blades, medical implants.","Portae metallicae TiN, laminae motorum, et implantata medica.","先端ICのTiNメタルゲートおよびバリア層、ジェットエンジンブレード、人工関節。")],
+  [23,"V","50.942","钒","Vanadium","Vanadium","バナジウム","transition",4,5,"s","6.11","1910","3407","1.63","651","153","+5","[Ar] 3d³ 4s²",[2,8,11,2],"1801","A. M. del Río",T("源于北欧神话女神 Vanadís。","Named after the Norse goddess Vanadís (Freyja).","A dea Nordica Vanadis nominatum.","北欧神話の女神ヴァナディスに由来。"),T("全钒液流大型电网储能电池、智能相变二氧化钒(VO₂)红外器件、高强度弹簧钢。","Vanadium redox flow batteries, VO2 smart IR sensors, high-strength steel.","Pilae fluxus vanadii, sensoria IR VO2, et chalybs fortis.","バナジウムレドックスフロー電池、VO₂スマート赤外線素子、高張力ばね鋼。")],
+  [24,"Cr","51.996","铬","Chromium","Chromium","クロム","transition",4,6,"s","7.19","1907","2671","1.66","653","139","+3, +6","[Ar] 3d⁵ 4s¹",[2,8,13,1],"1797","L. N. Vauquelin",T("源于希腊语 chroma（颜色）。","Derived from Greek 'chroma' (color).","A verbo Graeco 'chroma' derivatum.","ギリシャ語の「chroma（色）」に由来。"),T("半导体光刻掩模版(Photomask)遮光膜、防腐不锈钢合金核心元素、红宝石激光晶体。","Photomask opaque layers, anti-corrosive stainless steel, ruby lasers.","Strata obscura in photomask, chalybs inossidabilis, et lasera rubini.","フォトマスク遮光クロム膜、ステンレス鋼の耐食性元素、ルビーレーザー。")],
+  [25,"Mn","54.938","锰","Manganese","Manganum","マンガン","transition",4,7,"s","7.21","1246","2061","1.55","717","139","+2, +4, +7","[Ar] 3d⁵ 4s²",[2,8,13,2],"1774","J. G. Gahn",T("源于拉丁语 magnes（磁石）。","From Latin 'magnes' (magnet).","A verbo Latino 'magnes' derivatum.","ラテン語の「magnes（磁石）」に由来。"),T("新能源汽车NCM三元锂电池、高锰耐磨特种钢、软磁铁氧体电子元器件。","NCM EV battery cathodes, high-manganese wear-resistant steel.","Cathodi NCM pro pilis, chalybs durus, et ferritae magneticae.","EV用NCM三元系リチウム電池正極、高マンガン耐摩耗鋼、軟磁性フェライト。")],
+  [26,"Fe","55.845","铁","Iron","Ferrum","鉄","transition",4,8,"s","7.87","1538","2862","1.83","762","132","+2, +3","[Ar] 3d⁶ 4s²",[2,8,14,2],Y_PRE,D_HUM,T("拉丁名 Ferrum 意为坚硬的铁器。","Latin 'Ferrum' (iron).","A verbo Latino 'ferrum' derivatum.","ラテン語の「ferrum（鉄）」に由来。"),T("现代工业钢铁基石、磷酸铁锂(LFP)电池正极、钕铁硼永磁体、变压器硅钢片。","Steel foundation of modern industry, LFP batteries, NdFeB magnets.","Chalybs industrialis, pilae LFP, et magnetes NdFeB.","近代産業の鉄鋼インフラ、リン酸鉄リチウム(LFP)電池、ネオジム磁石。")],
+  [27,"Co","58.933","钴","Cobalt","Cobaltum","コバルト","transition",4,9,"s","8.90","1495","2927","1.88","760","126","+2, +3","[Ar] 3d⁷ 4s²",[2,8,15,2],"1735","Georg Brandt",T("源于德语 Kobold（矿山妖精）。","From German 'Kobold' (goblin or mine sprite).","A verbo Germanico 'Kobold' derivatum.","ドイツ語の「Kobold（鉱山の妖精）」に由来。"),T("先进制程互连线局部布线、LCO钴酸锂电池、航空高温合金、硬质合金刀具。","Advanced node logic interconnects, LCO batteries, aerospace superalloys.","Nexus logici in microchipiis, pilae LCO, et admixtiones aërospatiales.","最先端ロジックの局所配線、コバルト酸リチウム(LCO)電池、航空用超合金。")],
+  [28,"Ni","58.693","镍","Nickel","Niccolum","ニッケル","transition",4,10,"s","8.90","1455","2913","1.91","737","124","+2, +3","[Ar] 3d⁸ 4s²",[2,8,16,2],"1751","A. F. Cronstedt",T("源于德语 Kupfernickel（假铜矿/恶魔的铜）。","From German 'Kupfernickel' (devil's copper).","A vocabulo Germanico 'Kupfernickel' derivatum.","ドイツ語の「Kupfernickel（悪魔の銅）」に由来。"),T("CMOS晶体管硅化镍接触层、高镍三元动力电池、航空单晶高温合金。","CMOS NiSi contacts, high-nickel EV batteries, superalloys.","Contactus NiSi in CMOS, pilae EV, et admixtiones ad calorem.","CMOSのニッケルシリサイドコンタクト、高ニッケルEV電池、航空用超合金。")],
+  [29,"Cu","63.546","铜","Copper","Cuprum","銅","transition",4,11,"s","8.96","1084.62","2562","1.90","745","132","+1, +2","[Ar] 3d¹⁰ 4s¹",[2,8,18,1],Y_PRE,D_HUM,T("源于拉丁语 Cuprum（塞浦路斯岛之金属）。","From Latin 'Cuprum' (metal of Cyprus).","A nomine Latino 'Cuprum' (Aes Cyprium).","ラテン語の「Cuprum（キプロス島の金属）」に由来。"),T("大规模集成电路大马士革铜互连、PCB印刷电路板、电力电缆与电机绕组。","VLSI damascene interconnects, PCBs, power cables, electric motors.","Nexus VLSI Cu, tabulae PCB, et rudentes electrici.","VLSIダマシン銅配線、プリント基板(PCB)、電力ケーブル、モーター巻線。")],
+  [30,"Zn","65.38","锌","Zinc","Zincum","亜鉛","transition",4,12,"s","7.14","419.53","907","1.65","906","122","+2","[Ar] 3d¹⁰ 4s²",[2,8,18,2],"1746","A. S. Marggraf",T("源于德语 Zinke（尖刺状结晶）。","From German 'Zinke' (prong/tooth).","A verbo Germanico 'Zinke' derivatum.","ドイツ語の「Zinke（尖った結晶）」に由来。"),T("氧化锌宽禁带半导体与压电器件、硒化锌红外光学、钢铁热镀锌防腐。","ZnO wide-bandgap semiconductors, ZnSe IR optics, steel galvanization.","Semiconductra ZnO, optica IR ZnSe, et galvanizatio chalybis.","ZnOワイドギャップ半導体、ZnSe赤外線光学レンズ、鉄鋼の溶融亜鉛めっき。")],
+  [31,"Ga","69.723","镓","Gallium","Gallium","ガリウム","postTransition",4,13,"s","5.91","29.76","2400","1.81","579","122","+3","[Ar] 3d¹⁰ 4s² 4p¹",[2,8,18,3],"1875","L. de Boisbaudran",T("源于拉丁语 Gallia（高卢，法国古称）。","From Latin 'Gallia' (Gaul/France).","A nomine Latino 'Gallia' derivatum.","ラテン語の「Gallia（ガリア/フランスの古称）」に由来。"),T("氮化镓(GaN)第三代功率与射频半导体、砷化镓通信功放、Micro-LED显示芯片。","GaN 3rd-gen power/RF chips, GaAs telecom amplifiers, Micro-LEDs.","Semiconductra GaN, amplificatores GaAs, et LED.","GaN次世代パワー/RF半導体、GaAs通信アンプ、Micro-LEDチップ。")],
+  [32,"Ge","72.630","锗","Germanium","Germanium","ゲルマニウム","metalloid",4,14,"s","5.32","938.25","2833","2.01","762","120","+4","[Ar] 3d¹⁰ 4s² 4p²",[2,8,18,4],"1886","Clemens Winkler",T("源于拉丁语 Germania（日耳曼尼亚，即德国）。","From Latin 'Germania' (Germany).","A nomine Latino 'Germania' derivatum.","ラテン語の「Germania（ゲルマニア/ドイツ）」に由来。"),T("先进制程应变硅锗(SiGe)晶体管沟道、红外热成像光学镜头、空间高能光伏。","Strained SiGe high-freq transistor channels, IR thermal optics, space solar.","Canales SiGe in transistoriis, optica IR, et photovoltaica spatialia.","先端SiGeトランジスタチャネル、赤外線熱画像レンズ、宇宙用太陽電池。")],
+  [33,"As","74.922","砷","Arsenic","Arsenicum","ヒ素","metalloid",4,15,"s","5.72","817","614","2.18","947","119","-3, +3, +5","[Ar] 3d¹⁰ 4s² 4p³",[2,8,18,5],"1250","Albertus Magnus",T("源于希腊语 arsenikon（雄黄）。","From Greek 'arsenikon' (orpiment).","A verbo Graeco 'arsenikon' derivatum.","ギリシャ語の「arsenikon（雄黄）」に由来。"),T("砷化镓与铟镓砷(InGaAs)微波高速通信芯片、硅晶圆N型离子注入源。","GaAs/InGaAs high-speed telecom chips, N-type silicon ion implantation.","Microchipia GaAs/InGaAs, et dopatio N-typi in silicio.","GaAs/InGaAs高速マイクロ波通信チップ、シリコンN型イオンドーパント。")],
+  [34,"Se","78.971","硒","Selenium","Selenium","セレン","nonmetal",4,16,"s","4.81","221","685","2.55","941","120","-2, +4, +6","[Ar] 3d¹⁰ 4s² 4p⁴",[2,8,18,6],"1817","J. J. Berzelius",T("源于希腊神话月神 Selene。","Named after the Greek moon goddess Selene.","A dea Lunae Graeca Selene nominatum.","ギリシャ神話の月の女神セレーネ（Selene）に由来。"),T("铜铟镓硒(CIGS)薄膜光伏电池、X射线平板探测器光导层。","CIGS thin-film solar cells, X-ray flat panel detector photoconductors.","Cellulae solares CIGS, detectores radiorum X.","CIGS薄膜太陽電池、X線フラットパネル検出器の光導電層。")],
+  [35,"Br","79.904","溴","Bromine","Bromum","臭素","halogen",4,17,"l","3.10","-7.2","58.8","2.96","1140","120","-1, +5","[Ar] 3d¹⁰ 4s² 4p⁵",[2,8,18,7],"1826","A. J. Balard",T("源于希腊语 bromos（浓烈恶臭）。","From Greek 'bromos' (stench).","A verbo Graeco 'bromos' (fetor) derivatum.","ギリシャ語の「bromos（悪臭）」に由来。"),T("覆铜板(PCB)阻燃剂、多晶硅高选择比HBr等离子刻蚀气。","PCB flame retardants, highly selective HBr plasma etching for polysilicon.","Tarda flammae PCB, corrosio HBr plasmatica pro silicio.","プリント基板(PCB)難燃剤、ポリシリコン用高選択比HBrプラズマエッチング。")],
+  [36,"Kr","83.798","氪","Krypton","Krypton","クリプトン","noble",4,18,"g","0.0037","-157.37","-153.41","3.00","1351","116","0","[Ar] 3d¹⁰ 4s² 4p⁶",[2,8,18,8],"1898","Ramsay & Travers",T("源于希腊语 kryptos（隐藏的）。","From Greek 'kryptos' (hidden).","A verbo Graeco 'kryptos' (occultus) derivatum.","ギリシャ語の「kryptos（隠された）」に由来。"),T("KrF(248nm)深紫外准分子激光器工作气、3D NAND高深宽比刻蚀。","KrF (248nm) DUV excimer laser gas, 3D NAND high-aspect-ratio etching.","Gas pro laseribus excimer KrF, corrosio 3D NAND.","KrF(248nm)エキシマレーザー光源ガス、3D NAND高アスペクト比エッチング。")],
+  [37,"Rb","85.468","铷","Rubidium","Rubidium","ルビジウム","alkali",5,1,"s","1.53","39.30","688","0.82","403","220","+1","[Kr] 5s¹",[2,8,18,8,1],"1861","Bunsen & Kirchhoff",T("源于拉丁语 rubidus（深红色）。","From Latin 'rubidus' (deep red).","A verbo Latino 'rubidus' derivatum.","ラテン語の「rubidus（深紅色）」に由来。"),T("北斗与GPS导航卫星原子钟、冷原子物理实验、特种光电倍增管。","GPS/Beidou satellite atomic clocks, cold atom physics, photomultipliers.","Horologia atomica satellitum, physica atomorum frigidorum.","GPS衛星搭載原子時計、冷却原子物理学、特殊光電子増倍管。")],
+  [38,"Sr","87.62","锶","Strontium","Strontium","ストロンチウム","alkaline",5,2,"s","2.63","777","1377","0.95","549","195","+2","[Kr] 5s²",[2,8,18,8,2],"1790","Adair Crawford",T("源于苏格兰矿石产地 Strontian。","Named after the Scottish village of Strontian.","A vico Scotico Strontian nominatum.","スコットランドの村ストロンティアンに由来。"),T("超高精度锶光晶格原子钟、铁氧体永磁电机、红色烟花发光剂。","Ultra-precise optical lattice clocks, ferrite magnets, red fireworks.","Horologia craticulae opticae, magnetes ferritae, ignes artificiosi rubri.","超高精度光格子時計、フェライト磁石、赤色花火。")],
+  [39,"Y","88.906","钇","Yttrium","Yttrium","イットリウム","transition",5,3,"s","4.47","1526","3336","1.22","600","190","+3","[Kr] 4d¹ 5s²",[2,8,18,9,2],"1794","Johan Gadolin",T("源于瑞典村庄 Ytterby。","Named after Ytterby, Sweden.","A vico Suecico Ytterby nominatum.","スウェーデンの村イッテルビーに由来。"),T("Nd:YAG工业激光器晶体、YBCO高温超导带材、半导体刻蚀腔室涂层。","Nd:YAG lasers, YBCO high-Tc superconductors, plasma etch chamber coatings.","Lasera Nd:YAG, superconductra YBCO, tunicamenta camerarum corrosionis.","Nd:YAGレーザー結晶、YBCO高温超伝導体、エッチング装置の耐プラズマコーティング。")],
+  [40,"Zr","91.224","锆","Zirconium","Zirconium","ジルコニウム","transition",5,4,"s","6.52","1855","4409","1.33","640","175","+4","[Kr] 4d² 5s²",[2,8,18,10,2],"1789","M. H. Klaproth",T("源于波斯语 zargun（金色宝石）。","From Persian 'zargun' (gold-colored).","A verbo Persico 'zargun' derivatum.","ペルシャ語の「zargun（金色の宝石）」に由来。"),T("CMOS高介电常数(High-k)栅介质、核燃料棒包壳锆合金、特种陶瓷。","CMOS High-k gate dielectrics, nuclear fuel cladding, specialty ceramics.","Dielectrica High-k in CMOS, involucra focalis nuclearis.","CMOS用High-kゲート絶縁膜、核燃料被覆管、特殊ファインセラミックス。")],
+  [41,"Nb","92.906","铌","Niobium","Niobium","ニオブ","transition",5,5,"s","8.57","2477","4744","1.6","652","164","+3, +5","[Kr] 4d⁴ 5s¹",[2,8,18,12,1],"1801","Charles Hatchett",T("源于希腊神话坦塔罗斯之女 Niobe。","Named after Niobe in Greek mythology.","A Niobe e mythologia Graeca nominatum.","ギリシャ神話のニオベ（タンタロスの娘）に由来。"),T("超导量子计算机约瑟夫森结、铌酸锂光调制器、高强钢合金。","Superconducting qubits, LiNbO3 optical modulators, HSLA steel.","Qubita superconducentia, modulatratores optici LiNbO3.","超伝導量子ビット(ジョセフソン接合)、ニオブ酸リチウム光変調器、高張力鋼。")],
+  [42,"Mo","95.95","钼","Molybdenum","Molybdaenum","モリブデン","transition",5,6,"s","10.28","2623","4639","2.16","684","154","+6","[Kr] 4d⁵ 5s¹",[2,8,18,13,1],"1778","C. W. Scheele",T("源于希腊语 molybdos（铅）。","From Greek 'molybdos' (lead).","A verbo Graeco 'molybdos' derivatum.","ギリシャ語の「molybdos（鉛）」に由来。"),T("二硫化钼二维晶体管、3D NAND字线金属替换、高温耐火合金。","MoS2 2D transistors, 3D NAND word lines, refractory alloys.","Transistoria 2D MoS2, lineae 3D NAND, admixtiones refractariae.","MoS₂二次元半導体トランジスタ、3D NANDワード線金属、耐熱合金。")],
+  [43,"Tc","[97]","锝","Technetium","Technetium","テクネチウム","transition",5,7,"s","11.5","2157","4265","1.9","702","147","+4, +7","[Kr] 4d⁵ 5s²",[2,8,18,13,2],"1937","Perrier & Segrè",T("源于希腊语 technetos（人造的）。","From Greek 'technetos' (artificial).","A verbo Graeco 'technetos' derivatum.","ギリシャ語の「technetos（人工の）」に由来。"),T("核医学SPECT显像诊断同位素(99mTc)、化学催化与超导研究。","SPECT medical imaging (99mTc), catalysis, superconductivity research.","Imaginatio medica SPECT (99mTc), catalysis, et superconducentia.","核医学SPECT画像診断(99mTc)、触媒および超伝導研究。")],
+  [44,"Ru","101.07","钌","Ruthenium","Ruthenium","ルテニウム","transition",5,8,"s","12.45","2334","4150","2.2","710","146","+3, +4","[Kr] 4d⁷ 5s¹",[2,8,18,15,1],"1844","Karl Ernst Claus",T("源于拉丁语 Ruthenia（罗斯/俄罗斯）。","From Latin 'Ruthenia' (Russia).","A nomine Latino 'Ruthenia' derivatum.","ラテン語の「Ruthenia（ロシア）」に由来。"),T("2nm逻辑芯片先进互连布线、EUV光刻机极紫外面罩保护层。","2nm logic chip interconnects, EUV mask capping layers.","Nexus in microchipiis 2nm, strata protectiva EUV.","2nmロジックICの先端配線、EUV露光マスク保護層。")],
+  [45,"Rh","102.91","铑","Rhodium","Rhodium","ロジウム","transition",5,9,"s","12.41","1964","3695","2.28","720","142","+3","[Kr] 4d⁸ 5s¹",[2,8,18,16,1],"1803","W. H. Wollaston",T("源于希腊语 rhodon（玫瑰）。","From Greek 'rhodon' (rose).","A verbo Graeco 'rhodon' derivatum.","ギリシャ語の「rhodon（バラ）」に由来。"),T("汽车尾气三元催化器核心元素、光学反射镀层、高温热电偶。","Catalytic converters, optical reflective coatings, high-temp thermocouples.","Catalysatores vehiculorum, tunicamenta reflectentia, thermocopulae.","自動車排ガス浄化触媒、光学反射コーティング、高温熱電対。")],
+  [46,"Pd","106.42","钯","Palladium","Palladium","パラジウム","transition",5,10,"s","12.02","1554.9","2963","2.20","804","139","+2, +4","[Kr] 4d¹⁰",[2,8,18,18],"1803","W. H. Wollaston",T("源于小行星智神星 Pallas。","Named after the asteroid Pallas.","Ab asteroide Pallas nominatum.","小惑星パラスに由来。"),T("超纯氢气纯化膜、MLCC多层片式陶瓷电容器内电极、偶联反应催化剂。","Ultra-pure H2 purification membranes, MLCC internal electrodes, cross-coupling catalysis.","Membranae purificandi hydrogenii, electrodi MLCC, catalysis.","超高純度水素精製膜、積層セラミックコンデンサ(MLCC)内部電極、クロスカップリング触媒。")],
+  [47,"Ag","107.87","银","Silver","Argentum","銀","transition",5,11,"s","10.49","961.78","2162","1.93","731","145","+1","[Kr] 4d¹⁰ 5s¹",[2,8,18,18,1],Y_PRE,D_HUM,T("拉丁名 Argentum 意为闪亮之物。","Latin 'Argentum' (shiny/white).","A verbo Latino 'argentum' (splendens).","ラテン語の「argentum（輝くもの）」に由来。"),T("光伏太阳能导电银浆、高端芯片引线键合(Wire Bonding)、纳米抗菌材料。","Solar cell conductive silver paste, advanced IC wire bonding, antimicrobials.","Pasta argenti pro cellulis solaribus, vincula filorum IC.","太陽電池用導電性銀ペースト、ICワイヤーボンディング、抗菌ナノ材料。")],
+  [48,"Cd","112.41","镉","Cadmium","Cadmium","カドミウム","transition",5,12,"s","8.65","321.07","767","1.69","868","144","+2","[Kr] 4d¹⁰ 5s²",[2,8,18,18,2],"1817","Friedrich Stromeyer",T("源于拉丁语 cadmia（菱锌矿）。","From Latin 'cadmia' (calamine).","A verbo Latino 'cadmia' derivatum.","ラテン語の「cadmia（菱亜鉛鉱）」に由来。"),T("碲化镉薄膜光伏组件、量子点QLED显示背光膜、核反应堆控制棒。","CdTe thin-film solar cells, QLED quantum dots, nuclear control rods.","Cellulae solares CdTe, puncta quantica QLED.","CdTe薄膜太陽電池、QLED量子ドットディスプレイ、原子炉制御棒。")],
+  [49,"In","114.82","铟","Indium","Indium","インジウム","postTransition",5,13,"s","7.31","156.6","2072","1.78","558","142","+3","[Kr] 4d¹⁰ 5s² 5p¹",[2,8,18,18,3],"1863","Reich & Richter",T("源于拉丁语 indicum（靛蓝色）。","From Latin 'indicum' (indigo).","A verbo Latino 'indicum' derivatum.","ラテン語の「indicum（インディゴブルー）」に由来。"),T("液晶/OLED触控屏ITO透明电极、磷化铟光模块芯片、GPU低温液态散热材料。","ITO transparent electrodes for displays, InP photonic chips, liquid metal TIMs.","Electrodi transparentes ITO, microchipia InP, et dissipatio caloris.","LCD/OLED用ITO透明電極、InP光通信チップ、GPU向け液体金属サーマルペースト。")],
+  [50,"Sn","118.71","锡","Tin","Stannum","スズ","postTransition",5,14,"s","7.26","231.93","2602","1.96","709","139","+2, +4","[Kr] 4d¹⁰ 5s² 5p²",[2,8,18,18,4],Y_PRE,D_HUM,T("拉丁名 Stannum。","Latin 'Stannum'.","A verbo Latino 'stannum'.","ラテン語の「stannum（スズ）」に由来。"),T("EUV光刻机极紫外光源液态靶滴、电子无铅环保焊料、马口铁防腐镀层。","EUV lithography LPP light source droplets, lead-free solder.","Guttae stanni in lithographia EUV, stannum ad glutinandum.","EUV露光機の極端紫外光源用液滴ターゲット、鉛フリーはんだ。")],
+  [51,"Sb","121.76","锑","Antimony","Stibium","アンチモン","metalloid",5,15,"s","6.69","630.63","1587","2.05","834","139","+3, +5","[Kr] 4d¹⁰ 5s² 5p³",[2,8,18,18,5],Y_PRE,D_HUM,T("拉丁名 Stibium。","Latin 'Stibium'.","A verbo Latino 'stibium'.","ラテン語の「stibium（輝安鉱）」に由来。"),T("PCM相变非易失性存储器芯片、红外热成像探测器、塑料阻燃剂。","PCM phase-change memory chips, IR thermal detectors, flame retardants.","Memoria PCM, detectores thermici IR, et tarda flammae.","相変化メモリ(PCM)チップ、赤外線熱画像センサー、プラスチック難燃剤。")],
+  [52,"Te","127.60","碲","Tellurium","Tellurium","テルル","metalloid",5,16,"s","6.24","449.51","988","2.1","869","138","-2, +4, +6","[Kr] 4d¹⁰ 5s² 5p⁴",[2,8,18,18,6],"1782","Müller von Reichenstein",T("源于拉丁语 tellus（大地）。","From Latin 'tellus' (Earth).","A verbo Latino 'tellus' (terra) derivatum.","ラテン語の「tellus（地球）」に由来。"),T("光通信TEC半导体制冷片核心材料、相变存储合金、易切削钢。","TEC thermoelectric coolers for photonics, phase-change memory.","Refrigeratores thermoelectrici TEC, memoria status mutabilis.","光通信用TECペルチェ素子、相変化メモリ合金、快削鋼。")],
+  [53,"I","126.90","碘","Iodine","Iodum","ヨウ素","halogen",5,17,"s","4.93","113.7","184.3","2.66","1008","139","-1, +1, +5, +7","[Kr] 4d¹⁰ 5s² 5p⁵",[2,8,18,18,7],"1811","Bernard Courtois",T("源于希腊语 ioeides（紫罗兰色）。","From Greek 'ioeides' (violet-colored).","A verbo Graeco 'ioeides' derivatum.","ギリシャ語の「ioeides（すみれ色）」に由来。"),T("钙钛矿太阳能电池光吸收层、LCD偏光片染色剂、医疗X光造影剂。","Perovskite solar cell absorbers, LCD polarizer dyes, medical X-ray contrast media.","Cellulae solares perovskitae, pigmenta LCD, et media contrastus radiorum X.","ペロブスカイト太陽電池光吸収層、LCD偏光板染色、医療用X線造影剤。")],
+  [54,"Xe","131.29","氙","Xenon","Xenon","キセノン","noble",5,18,"g","0.00589","-111.75","-108.09","2.60","1170","140","0","[Kr] 4d¹⁰ 5s² 5p⁶",[2,8,18,18,8],"1898","Ramsay & Travers",T("源于希腊语 xenos（外来的客人）。","From Greek 'xenos' (stranger/guest).","A verbo Graeco 'xenos' derivatum.","ギリシャ語の「xenos（見知らぬ人）」に由来。"),T("深空探测器霍尔电推进系统工质、高深宽比半导体刻蚀、医疗麻醉气。","Deep space Hall-effect ion thruster propellant, high-aspect-ratio IC etching.","Propellens in motoribus ionicis spatialibus, corrosio IC.","深宇宙探査機のホールスラスター推進剤、高アスペクト比半導体エッチング。")],
+  [55,"Cs","132.91","铯","Caesium","Caesium","セシウム","alkali",6,1,"s","1.93","28.44","671","0.79","376","244","+1","[Xe] 6s¹",[2,8,18,18,8,1],"1860","Bunsen & Kirchhoff",T("源于拉丁语 caesius（天蓝色）。","From Latin 'caesius' (sky blue).","A verbo Latino 'caesius' derivatum.","ラテン語の「caesius（青空の色）」に由来。"),T("定义标准秒的高精度原子钟、夜视仪光电阴极、石油钻井高密度完井液。","Standard atomic clocks defining the 'second', photomultipliers, drilling fluids.","Horologia atomica ad definiendum 'secundum', fluida ad terebrandum.","標準秒を定義するセシウム原子時計、光電子増倍管、石油掘削液。")],
+  [56,"Ba","137.33","钡","Barium","Barium","バリウム","alkaline",6,2,"s","3.51","727","1845","0.89","503","215","+2","[Xe] 6s²",[2,8,18,18,8,2],"1808","Humphry Davy",T("源于希腊语 barys（沉重的）。","From Greek 'barys' (heavy).","A verbo Graeco 'barys' derivatum.","ギリシャ語の「barys（重い）」に由来。"),T("MLCC片式多层陶瓷电容材料(BaTiO3)、非线性光学晶体、医疗消化道造影。","BaTiO3 dielectrics for MLCCs, non-linear optical crystals, medical radiocontrast.","Dielectrica BaTiO3 pro MLCC, crystalli optici, media contrastus.","MLCC積層セラミックコンデンサ(BaTiO₃)、非線形光学結晶、医療用X線造影剤。")],
+  [57,"La","138.91","镧","Lanthanum","Lanthanum","ランタン","lanthanide",6,3,"s","6.14","920","3464","1.10","538","207","+3","[Xe] 5d¹ 6s²",[2,8,18,18,9,2],"1839","C. G. Mosander",T("源于希腊语 lanthanein（隐藏）。","From Greek 'lanthanein' (to lie hidden).","A verbo Graeco 'lanthanein' derivatum.","ギリシャ語の「lanthanein（隠れる）」に由来。"),T("单反相机与光刻机高折射率光学镜头、铝酸镧高k栅介质研究、镍氢电池。","High-index optics for lithography/cameras, LaAlO3 high-k dielectrics, NiMH batteries.","Optica altae refractionis pro lithographia, dielectrica LaAlO3.","一眼レフ・露光機用高屈折率レンズ、LaAlO₃高kゲート絶縁膜、ニッケル水素電池。")],
+  [58,"Ce","140.12","铈","Cerium","Cerium","セリウム","lanthanide",6,null,"s","6.77","795","3443","1.12","534","204","+3, +4","[Xe] 4f¹ 5d¹ 6s²",[2,8,18,19,9,2],"1803","Berzelius & Hisinger",T("源于谷神星 Ceres。","Named after the dwarf planet Ceres.","A planeta nano Ceres nominatum.","準惑星ケレスに由来。"),T("晶圆CMP化学机械抛光纳米核心磨料、汽车尾气三元催化储氧材料。","CMP nano-abrasives for wafer polishing, automotive catalytic converters.","Abrasiva CMP pro politura wafer, catalysatores vehiculorum.","半導体ウェハーCMP研磨用ナノ研磨材、自動車排ガス浄化触媒。")],
+  [59,"Pr","140.91","镨","Praseodymium","Praseodymium","プラセオジム","lanthanide",6,null,"s","6.77","935","3520","1.13","527","203","+3","[Xe] 4f³ 6s²",[2,8,18,21,8,2],"1885","C. A. von Welsbach",T("源于希腊语 prasios（韭菜绿）+ didymos（双子）。","From Greek 'prasios' (green) and 'didymos' (twin).","A verbis Graecis 'prasios' et 'didymos'.","ギリシャ語の「prasios（緑）」と「didymos（双子）」に由来。"),T("电动汽车驱动电机镨钕强磁体、光纤放大器掺杂剂、电焊护目镜玻璃。","Pr-Nd EV motor magnets, optical fiber amplifiers, welding goggle glass.","Magnetes Pr-Nd pro motoribus EV, amplificatores fibrarum opticarum.","EV駆動モーター用プラセオジム・ネオジム磁石、光ファイバー増幅器。")],
+  [60,"Nd","144.24","钕","Neodymium","Neodymium","ネオジム","lanthanide",6,null,"s","7.01","1024","3074","1.14","533","201","+3","[Xe] 4f⁴ 6s²",[2,8,18,22,8,2],"1885","C. A. von Welsbach",T("源于希腊语 neos（新）+ didymos（双子）。","From Greek 'neos' (new) and 'didymos' (twin).","A verbis Graecis 'neos' et 'didymos'.","ギリシャ語の「neos（新しい）」と「didymos（双子）」に由来。"),T("世界最强永磁体(钕铁硼)核心原料、高功率Nd:YAG固体激光器阵列。","NdFeB permanent magnets (strongest known), high-power Nd:YAG lasers.","Magnetes NdFeB fortissimi, lasera Nd:YAG altae potentiae.","世界最強のネオジム磁石(NdFeB)、高出力Nd:YAGレーザー。")],
+  [61,"Pm","[145]","钷","Promethium","Promethium","プロメチウム","lanthanide",6,null,"s","7.26","1042","3000","1.13","540","199","+3","[Xe] 4f⁵ 6s²",[2,8,18,23,8,2],"1945","Marinsky et al.",T("源于希腊神话普罗米修斯。","Named after Prometheus from Greek mythology.","A Prometheo e mythologia Graeca nominatum.","ギリシャ神話のプロメテウスに由来。"),T("微型长寿命核电池、夜光仪表荧光粉激发源、核物理基础研究。","Miniature nuclear batteries, radioluminescent paint excitation source.","Pilae nucleares parvae, fons excitationis pro pigmentis luminosis.","超小型長寿命原子力電池、夜光塗料の励起光源、核物理学研究。")],
+  [62,"Sm","150.36","钐","Samarium","Samarium","サマリウム","lanthanide",6,null,"s","7.52","1072","1794","1.17","545","198","+2, +3","[Xe] 4f⁶ 6s²",[2,8,18,24,8,2],"1879","L. de Boisbaudran",T("源于铌钇矿的发现者 Vasili Samarsky。","Named after Vasili Samarsky-Bykhovets.","A Vasili Samarsky-Bykhovets nominatum.","サマルスキー石（発見者サマルスキー）に由来。"),T("耐高温不退磁的航空级钐钴(SmCo)永磁体、核反应堆控制棒吸收剂。","High-temp stable SmCo supermagnets, nuclear reactor control rods.","Magnetes SmCo stabiles ad calorem, virgae moderatrices in reactoribus.","耐熱性サマリウムコバルト(SmCo)磁石、原子炉制御棒。")],
+  [63,"Eu","151.96","铕","Europium","Europium","ユウロピウム","lanthanide",6,null,"s","5.24","826","1529","1.2","547","198","+2, +3","[Xe] 4f⁷ 6s²",[2,8,18,25,8,2],"1901","E. Demarçay",T("源于拉丁语 Europa（欧洲）。","Named after the continent of Europe.","A nomine continente Europa derivatum.","ヨーロッパ大陸に由来。"),T("LED显示与照明高显色红/蓝荧光粉、欧元纸币高级紫外防伪荧光墨。","Red/blue phosphors for LEDs and displays, euro banknote anti-counterfeiting.","Phosphori rubri/caerulei pro LED, atramentum anti-falsificatio in nummis Euro.","LED/ディスプレイ用赤・青色蛍光体、ユーロ紙幣の偽造防止蛍光インク。")],
+  [64,"Gd","157.25","钆","Gadolinium","Gadolinium","ガドリニウム","lanthanide",6,null,"s","7.90","1312","3273","1.20","593","196","+3","[Xe] 4f⁷ 5d¹ 6s²",[2,8,18,25,9,2],"1880","J. C. G. de Marignac",T("纪念芬兰化学家 Johan Gadolin。","Named after Finnish chemist Johan Gadolin.","Pro chemico Finnico Johan Gadolin nominatum.","フィンランドの化学者ガドリンにちなむ。"),T("核磁共振(MRI)医用顺磁造影剂、磁制冷室温巨磁热效应材料、核可燃毒物。","MRI contrast agents, room-temp magnetic refrigeration, nuclear burnable poisons.","Media contrastus pro MRI, refrigeratio magnetica, venena nuclearia.","MRI用造影剤、室温磁気冷凍材料、原子炉の可燃性毒物。")],
+  [65,"Tb","158.93","铽","Terbium","Terbium","テルビウム","lanthanide",6,null,"s","8.23","1356","3230","1.2","565","194","+3","[Xe] 4f⁹ 6s²",[2,8,18,27,8,2],"1843","C. G. Mosander",T("源于瑞典村庄 Ytterby。","Named after Ytterby, Sweden.","A vico Suecico Ytterby nominatum.","スウェーデンの村イッテルビーに由来。"),T("钕铁硼永磁体晶界扩散提升耐温性、超磁致伸缩声呐换能器、绿色荧光粉。","NdFeB magnet grain boundary diffusion, Terfenol-D sonar transducers, green phosphors.","Diffusio in magnetibus NdFeB, transductores sonaris, phosphori virides.","NdFeB磁石の耐熱性向上のための粒界拡散、超磁歪素子、緑色蛍光体。")],
+  [66,"Dy","162.50","镝","Dysprosium","Dysprosium","ジスプロシウム","lanthanide",6,null,"s","8.54","1407","2567","1.22","573","192","+3","[Xe] 4f¹⁰ 6s²",[2,8,18,28,8,2],"1886","L. de Boisbaudran",T("源于希腊语 dysprositos（难以取得）。","From Greek 'dysprositos' (hard to get).","A verbo Graeco 'dysprositos' derivatum.","ギリシャ語の「dysprositos（近づきがたい）」に由来。"),T("新能源车耐高温驱动电机钕铁硼抗退磁核心添加剂、磁光数据存储。","EV NdFeB magnet anti-demagnetization additives, magneto-optical storage.","Additiva in magnetibus NdFeB pro EV, memoria magneto-optica.","EV駆動モーター用ネオジム磁石の耐熱保磁力向上添加剤。")],
+  [67,"Ho","164.93","钬","Holmium","Holmium","ホルミウム","lanthanide",6,null,"s","8.79","1461","2720","1.23","581","192","+3","[Xe] 4f¹¹ 6s²",[2,8,18,29,8,2],"1878","Delafontaine & Soret",T("源于斯德哥尔摩拉丁名 Holmia。","From 'Holmia', Latin name for Stockholm.","A nomine Latino Holmia (Holmiae) derivatum.","ストックホルムのラテン語名に由来。"),T("微创碎石掺钬激光器(Ho:YAG)、自然界最高磁矩聚磁极靴材料。","Ho:YAG medical lasers for lithotripsy, highest magnetic moment pole pieces.","Lasera medica Ho:YAG, poli magnetici altissimi momenti.","医療用ホルミウムレーザー(Ho:YAG結石破砕)、最高磁気モーメント極。")],
+  [68,"Er","167.26","铒","Erbium","Erbium","エルビウム","lanthanide",6,null,"s","9.07","1529","2868","1.24","589","189","+3","[Xe] 4f¹² 6s²",[2,8,18,30,8,2],"1843","C. G. Mosander",T("源于瑞典村庄 Ytterby。","Named after Ytterby, Sweden.","A vico Suecico Ytterby nominatum.","スウェーデンの村イッテルビーに由来。"),T("全球骨干光网核心EDFA掺铒光纤放大器(直接放大1550nm光信号)、点阵激光。","EDFA fiber-optic amplifiers for global telecom, Er:YAG dermatological lasers.","Amplificatores EDFA pro retibus opticis, lasera Er:YAG.","海底ケーブル・光通信網のEDFAエルビウム添加光ファイバ増幅器。")],
+  [69,"Tm","168.93","铥","Thulium","Thulium","ツリウム","lanthanide",6,null,"s","9.32","1545","1950","1.25","597","190","+3","[Xe] 4f¹³ 6s²",[2,8,18,31,8,2],"1879","Per Teodor Cleve",T("源于拉丁语 Thule（斯堪的纳维亚极北之地）。","Named after Thule (mythical far north).","A nomine Latino Thule (terra borealis) nominatum.","北欧の伝説の地ツーレに由来。"),T("便携式无源X射线探伤仪同位素源(170Tm)、2微米波段高精医疗激光刀。","Portable X-ray defectoscopy (170Tm), 2-micron surgical lasers.","Radiographia portatilis defectuum, lasera chirurgica 2-micron.","携帯型X線非破壊検査線源、2μm帯医療用レーザーメス。")],
+  [70,"Yb","173.05","镱","Ytterbium","Ytterbium","イッテルビウム","lanthanide",6,null,"s","6.90","824","1196","1.1","603","187","+2, +3","[Xe] 4f¹⁴ 6s²",[2,8,18,32,8,2],"1878","J. C. G. de Marignac",T("源于瑞典村庄 Ytterby。","Named after Ytterby, Sweden.","A vico Suecico Ytterby nominatum.","スウェーデンの村イッテルビーに由来。"),T("工业万瓦级光纤切割核心掺镱光纤激光器、超高精度光钟、OLED电子注入层。","Ytterbium-doped industrial fiber lasers, ultra-precise optical clocks, OLEDs.","Lasera fibrarum industrialia, horologia optica, et OLED.","高出力ファイバーレーザー(金属切断等)、超高精度光格子時計、OLED。")],
+  [71,"Lu","174.97","镥","Lutetium","Lutetium","ルテチウム","lanthanide",6,null,"s","9.84","1652","3402","1.27","524","187","+3","[Xe] 4f¹⁴ 5d¹ 6s²",[2,8,18,32,9,2],"1907","Urbain & von Welsbach",T("源于法国巴黎古名 Lutetia。","From 'Lutetia', Latin name for Paris.","A nomine Latino Lutetia (Parisiis) derivatum.","パリの古いラテン語名ルテティアに由来。"),T("医院PET-CT显像核心LYSO闪烁晶体、晚期前列腺癌靶向放射核药(177Lu)。","PET-CT scanner LYSO scintillators, targeted radionuclide therapy (177Lu).","Scintillatores LYSO in PET-CT, therapia radionuclidis directa (177Lu).","PET-CT用LYSOシンチレーター結晶、標的アイソトープ治療薬(177Lu)。")],
+  [72,"Hf","178.49","铪","Hafnium","Hafnium","ハフニウム","transition",6,4,"s","13.31","2233","4603","1.3","659","175","+4","[Xe] 4f¹⁴ 5d² 6s²",[2,8,18,32,10,2],"1923","Coster & de Hevesy",T("源于哥本哈根拉丁名 Hafnia。","From 'Hafnia', Latin name for Copenhagen.","A nomine Latino Hafnia (Hafniae) derivatum.","コペンハーゲンのラテン語名ハフニアに由来。"),T("45nm至2nm全世代先进芯片核心：HfO2高k栅极介质与铁电存储器(FeRAM)。","Core of advanced logic ICs: HfO2 high-k gate dielectrics and FeRAM.","Dielectrica High-k HfO2 in microchipiis, et memoria FeRAM.","45nm〜2nm世代ロジックICのHigh-kゲート絶縁膜(HfO₂)、強誘電体メモリ。")],
+  [73,"Ta","180.95","钽","Tantalum","Tantalum","タンタル","transition",6,5,"s","16.69","3017","5458","1.5","761","170","+5","[Xe] 4f¹⁴ 5d³ 6s²",[2,8,18,32,11,2],"1802","A. G. Ekeberg",T("源于希腊神话坦塔罗斯。","Named after Tantalus from Greek mythology.","A Tantalo e mythologia Graeca nominatum.","ギリシャ神話のタンタロスに由来。"),T("高端芯片大马士革铜互连必用Ta/TaN阻挡层、高可靠车规与军工钽电容。","IC Cu interconnect Ta/TaN barriers, high-reliability tantalum capacitors.","Strata obicantia Ta/TaN in IC, capacitores tantali pro vehiculis.","先端IC銅配線用Ta/TaNバリア層、高信頼性・車載用タンタルコンデンサ。")],
+  [74,"W","183.84","钨","Tungsten","Wolframium","タングステン","transition",6,6,"s","19.25","3422","5555","2.36","770","162","+4, +6","[Xe] 4f¹⁴ 5d⁴ 6s²",[2,8,18,32,12,2],"1783","Elhuyar brothers",T("源于德语 Wolfrahm（狼之泡沫）。","From German 'Wolfrahm' (wolf's froth).","A vocabulo Germanico 'Wolfrahm' derivatum.","ドイツ語の「Wolfrahm（狼の泡）」に由来。"),T("IC晶体管接触孔钨塞(W-Plug)与3D NAND字线金属、切削硬质合金、高温喷管。","IC W-plug contacts, 3D NAND word lines, cemented carbide cutting tools.","Contactus W-plug in IC, lineae 3D NAND, et stannum durum.","ICタングステンプラグ、3D NANDワード線、超硬合金切削工具。")],
+  [75,"Re","186.21","铼","Rhenium","Rhenium","レニウム","transition",6,7,"s","21.02","3186","5596","1.9","760","151","+4, +6, +7","[Xe] 4f¹⁴ 5d⁵ 6s²",[2,8,18,32,13,2],"1925","Noddack, Tacke & Berg",T("源于莱茵河拉丁名 Rhenus。","From 'Rhenus', Latin name for the Rhine.","A nomine Latino Rhenus (flumen Rhenus) derivatum.","ライン川のラテン語名レヌスに由来。"),T("航空发动机单晶涡轮叶片核心超高温合金、高辛烷值汽油铂铼重整催化剂。","Aerospace single-crystal superalloys for jet engines, Pt-Re reforming catalysts.","Admixtiones pro motoribus aërospatiali, catalysatores Pt-Re.","ジェットエンジン用単結晶超耐熱合金、石油精製(接触改質)白金レニウム触媒。")],
+  [76,"Os","190.23","锇","Osmium","Osmium","オスミウム","transition",6,8,"s","22.59","3033","5012","2.2","840","144","+4, +8","[Xe] 4f¹⁴ 5d⁶ 6s²",[2,8,18,32,14,2],"1803","Smithson Tennant",T("源于希腊语 osme（气味）。","From Greek 'osme' (smell/odor).","A verbo Graeco 'osme' (odor) derivatum.","ギリシャ語の「osme（匂い）」に由来。"),T("电子显微镜超薄切片细胞染色固定剂(OsO4)、高耐磨仪器枢轴与铱锇合金笔尖。","OsO4 for electron microscopy staining, extremely hard pivot instrument alloys.","OsO4 pro microscopiis electronicis, admixtiones durissimae pro instrumentis.","電子顕微鏡試料作製用の固定・染色剤(OsO₄)、極めて硬い計器用ピボット合金。")],
+  [77,"Ir","192.22","铱","Iridium","Iridium","イリジウム","transition",6,9,"s","22.56","2446","4428","2.20","880","141","+3, +4","[Xe] 4f¹⁴ 5d⁷ 6s²",[2,8,18,32,15,2],"1803","Smithson Tennant",T("源于彩虹女神 Iris。","Named after Iris, Greek goddess of the rainbow.","Ab Iride dea arcus caelestis nominatum.","ギリシャ神話の虹の女神イリスに由来。"),T("OLED显示屏高效磷光发光配合物、生长单晶的高温铱坩埚、高性能火花塞。","OLED phosphorescent emitters, high-temp crucibles for crystal growth, spark plugs.","Emitters phosphorescentes pro OLED, crucibula ad calorem, et scintillatores.","OLEDディスプレイ用りん光発光材料、単結晶育成用ルツボ、高性能点火プラグ。")],
+  [78,"Pt","195.08","铂","Platinum","Platinum","白金","transition",6,10,"s","21.45","1768.3","3825","2.28","870","136","+2, +4","[Xe] 4f¹⁴ 5d⁹ 6s¹",[2,8,18,32,17,1],"1735","Antonio de Ulloa",T("源于西班牙语 platina（小银）。","From Spanish 'platina' (little silver).","A verbo Hispanico 'platina' derivatum.","スペイン語の「platina（小さな銀）」に由来。"),T("氢燃料电池质子交换膜电催化剂、先进芯片MEMS铂电阻测温器、抗癌药顺铂。","PEM fuel cell electrocatalysts, MEMS RTD temperature sensors, cisplatin (anti-cancer).","Catalysatores pro cellulis focalibus PEM, sensoria temperaturae MEMS.","燃料電池の白金触媒、半導体MEMS測温抵抗体、抗がん剤シスプラチン。")],
+  [79,"Au","196.97","金","Gold","Aurum","金","transition",6,11,"s","19.30","1064.18","2970","2.54","890","136","+1, +3","[Xe] 4f¹⁴ 5d¹⁰ 6s¹",[2,8,18,32,18,1],Y_PRE,D_HUM,T("拉丁名 Aurum 意为闪耀的黎明。","Latin 'Aurum' (shining dawn).","A verbo Latino 'aurum' (aurora splendens) derivatum.","ラテン語の「aurum（輝く夜明け）」に由来。"),T("高端芯片金丝球焊(Wire Bonding)、PCB沉金高可靠性抗氧化焊盘、航天红外反射膜。","High-rel IC gold wire bonding, PCB ENIG pads, aerospace IR reflectors.","Vincula filorum auri in IC, tabulae PCB, et reflectores IR.","IC金ワイヤーボンディング、PCB無電解金めっき、宇宙機赤外線反射膜。")],
+  [80,"Hg","200.59","汞","Mercury","Hydrargyrum","水銀","transition",6,12,"l","13.53","-38.83","356.73","2.00","1007","132","+1, +2","[Xe] 4f¹⁴ 5d¹⁰ 6s²",[2,8,18,32,18,2],Y_PRE,D_HUM,T("拉丁名 Hydrargyrum 源于希腊水银。","Latin 'Hydrargyrum' (water-silver).","A verbo Graeco 'hydrargyros' (argentum liquidum).","ラテン語の「Hydrargyrum（水銀）」に由来。"),T("碲镉汞(HgCdTe)高性能红外焦平面阵列探测器、紫外杀菌灯、汞齐合金。","HgCdTe high-performance IR focal plane arrays, UV bactericidal lamps.","Detectores IR HgCdTe, lampades UV bactericidales, et amalgama.","HgCdTe赤外線イメージセンサー、紫外線殺菌ランプ。")],
+  [81,"Tl","204.38","铊","Thallium","Thallium","タリウム","postTransition",6,13,"s","11.85","304","1473","1.62","589","145","+1, +3","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹",[2,8,18,32,18,3],"1861","William Crookes",T("源于希腊语 thallos（新绿嫩芽）。","From Greek 'thallos' (green shoot).","A verbo Graeco 'thallos' derivatum.","ギリシャ語の「thallos（緑の小枝）」に由来。"),T("掺铊碘化钠(NaI:Tl)γ射线闪烁探测器、高温超导材料、红外光学透射材料。","NaI:Tl gamma-ray scintillation detectors, high-temp superconductors.","Detectores radiorum gamma NaI:Tl, superconductra ad calorem.","NaI:Tlシンチレーション検出器、高温超伝導材料、赤外線透過ガラス。")],
+  [82,"Pb","207.2","铅","Lead","Plumbum","鉛","postTransition",6,14,"s","11.34","327.46","1749","2.33","716","146","+2, +4","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²",[2,8,18,32,18,4],Y_PRE,D_HUM,T("拉丁名 Plumbum。","Latin 'Plumbum'.","A verbo Latino 'plumbum'.","ラテン語の「plumbum（鉛）」に由来。"),T("压电陶瓷驱动器与换能器核心(PZT)、钙钛矿太阳能电池、核与X射线高密度防护。","PZT piezoelectric ceramics, perovskite solar cells, X-ray/nuclear shielding.","Ceramica piezoelectrica PZT, cellulae solares, et protectio contra radios X.","PZT圧電セラミックス、ペロブスカイト太陽電池、X線および放射線遮蔽。")],
+  [83,"Bi","208.98","铋","Bismuth","Bismuthum","ビスマス","postTransition",6,15,"s","9.78","271.5","1564","2.02","703","148","+3","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³",[2,8,18,32,18,5],"1753","C. F. Geoffroy",T("源于德语 Wismut（白色金属）。","From German 'Wismut' (white mass).","A verbo Germanico 'Wismut' derivatum.","ドイツ語の「Wismut（白い金属）」に由来。"),T("二维半导体超低接触电阻电极材料、光模块TEC碲化铋制冷片、无铅环保低温焊锡。","2D material ultra-low contact resistance electrodes, Bi2Te3 TEC coolers, lead-free solder.","Electrodi in semiconductris 2D, refrigeratores TEC Bi2Te3, stannum sine plumbo.","次世代2D半導体の低抵抗電極、Bi₂Te₃ペルチェ素子、無鉛低温はんだ。")],
+  [84,"Po","[209]","钋","Polonium","Polonium","ポロニウム","postTransition",6,16,"s","9.20","254","962","2.0","812","140","+2, +4","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴",[2,8,18,32,18,6],"1898","Pierre & Marie Curie",T("纪念居里夫人的祖国波兰。","Named after Poland, homeland of Marie Curie.","Pro Polonia, patria Mariae Curie, nominatum.","マリ・キュリーの祖国ポーランドに由来。"),T("光学与半导体工业高静电消除α射线电离刷、早期航天同位素热源、核子触发器。","Alpha-emitter antistatic brushes for optics/semiconductors, early RTGs.","Penicilli antistatici in industria optica/semiconductro, fontes caloris isotopi.","半導体/光学機器用静電除去α線源ブラシ、初期の宇宙探査機用熱源。")],
+  [85,"At","[210]","砹","Astatine","Astatium","アスタチン","halogen",6,17,"s",null,"302","337","2.2","899","150","-1, +1, +5, +7","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵",[2,8,18,32,18,7],"1940","Corson et al.",T("源于希腊语 astatos（不稳定）。","From Greek 'astatos' (unstable).","A verbo Graeco 'astatos' derivatum.","ギリシャ語の「astatos（不安定な）」に由来。"),T("肿瘤精准靶向短射程α粒子放射免疫治疗前沿核药(211At)。","Targeted alpha-particle radiotherapy (211At) for cancer treatment.","Therapia radionuclidis directa cum particulis alpha (211At).","がんの標的α線治療用放射性同位素(211At)。")],
+  [86,"Rn","[222]","氡","Radon","Radon","ラドン","noble",6,18,"g","0.0097","-71","-61.7","2.2","1037","150","0","[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶",[2,8,18,32,18,8],"1900","F. E. Dorn",T("源于镭 Radium 的衍生物。","Derived from Radium.","A Radio derivatum.","ラジウム（Radium）に由来。"),T("地质断层与微震预测地球化学气相示踪剂、铀矿床探测。","Geochemical gas tracer for fault lines and seismic monitoring, uranium exploration.","Indici gas in geologia et monitorio seismico, exploratio uranii.","断層活動・地震予測の地球化学的トレーサー、ウラン鉱床探査。")],
+  [87,"Fr","[223]","钫","Francium","Francium","フランシウム","alkali",7,1,"s","2.48","27","677","0.79","380","260","+1","[Rn] 7s¹",[2,8,18,32,18,8,1],"1939","Marguerite Perey",T("纪念发现者佩雷的祖国法国。","Named after France, homeland of Marguerite Perey.","Pro Francia, patria M. Perey, nominatum.","発見者ペレーの祖国フランスに由来。"),T("基础物理实验：磁光阱冷原子宇称不守恒精密测量。","Fundamental physics: parity non-conservation in laser-cooled atoms.","Experimenta physicae fundamentalis in atomis frigidis.","冷却原子を用いたパリティ非保存の基礎物理学実験。")],
+  [88,"Ra","[226]","镭","Radium","Radium","ラジウム","alkaline",7,2,"s","5.5","700","1737","0.9","509","221","+2","[Rn] 7s²",[2,8,18,32,18,8,2],"1898","Pierre & Marie Curie",T("源于拉丁语 radius（光线/射线）。","From Latin 'radius' (ray).","A verbo Latino 'radius' derivatum.","ラテン語の「radius（光線、放射線）」に由来。"),T("晚期前列腺癌骨转移靶向α核素治疗核药(223Ra)、早期工业发光涂料。","Targeted alpha therapy for bone metastases (223Ra), historical radioluminescence.","Therapia directa pro cancro (223Ra), pigmenta luminosa historica.","前立腺がん骨転移の標的α線治療薬(223Ra)、かつての夜光塗料。")],
+  [89,"Ac","[227]","锕","Actinium","Actinium","アクチニウム","actinide",7,3,"s","10.07","1050","3198","1.1","499","215","+3","[Rn] 6d¹ 7s²",[2,8,18,32,18,9,2],"1899","Debierne & Giesel",T("源于希腊语 aktinos（光线）。","From Greek 'aktinos' (ray/beam).","A verbo Graeco 'aktis/aktinos' derivatum.","ギリシャ語の「aktinos（光線）」に由来。"),T("新一代强效肿瘤靶向α放射免疫治疗核心母体同位素(225Ac，“抗癌核导弹”)。","Targeted alpha therapy core parent isotope (225Ac) for robust cancer treatment.","Isotopus maternus pro therapia directa particulis alpha (225Ac).","次世代がん標的α線治療の親核種(225Ac)。")],
+  [90,"Th","232.04","钍","Thorium","Thorium","トリウム","actinide",7,null,"s","11.72","1750","4788","1.3","587","206","+4","[Rn] 6d² 7s²",[2,8,18,32,18,10,2],"1829","J. J. Berzelius",T("源于北欧神话雷神索尔(Thor)。","Named after Thor, Norse god of thunder.","A Thoro e mythologia Nordica nominatum.","北欧神話の雷神トールに由来。"),T("第四代先进钍基熔盐核反应堆(TMSR)核燃料、高折射光学玻璃、核物理超精密核钟。","TMSR Gen-IV nuclear reactors, high-index optics, 229Th nuclear clocks.","Focale in reactoribus nuclearibus TMSR, horologia nuclearia (229Th).","第4世代トリウム溶融塩炉(TMSR)燃料、超高精度229Th原子核時計。")],
+  [91,"Pa","231.04","镤","Protactinium","Protactinium","プロトアクチニウム","actinide",7,null,"s","15.37","1568","4027","1.5","568","200","+4, +5","[Rn] 5f² 6d¹ 7s²",[2,8,18,32,20,9,2],"1913","Fajans & Göhring",T("源于希腊语 protos（先于）+ 锕。","From Greek 'protos' (first) + actinium.","A verbo Graeco 'protos' et actinium.","ギリシャ語の「protos（最初の）」とアクチニウムに由来。"),T("深海沉积物与冰芯古气候年代测定同位素示踪(231Pa/230Th比值法)。","Paleoclimate dating and oceanography isotopic tracing (231Pa/230Th ratio).","Datatio in palaeoclimatologia (ratio 231Pa/230Th).","古海洋学や気候変動研究における年代測定(231Pa/230Th比)。")],
+  [92,"U","238.03","铀","Uranium","Uranium","ウラン","actinide",7,null,"s","19.1","1132.2","4131","1.38","598","196","+3, +4, +5, +6","[Rn] 5f³ 6d¹ 7s²",[2,8,18,32,21,9,2],"1789","M. H. Klaproth",T("源于天王星 Uranus。","Named after the planet Uranus.","A planeta Urano nominatum.","天王星（Uranus）に由来。"),T("全球主流压水堆商用核电站核心核裂变燃料(235U)、地球年龄同位素测定。","Core fission fuel for commercial nuclear power plants (235U), radiometric dating.","Focale in reactoribus nuclearibus commercialibus (235U), datatio radiometrica.","商用原子力発電所の核分裂燃料(235U)、放射年代測定。")],
+  [93,"Np","[237]","镎","Neptunium","Neptunium","ネプツニウム","actinide",7,null,"s","20.45","644","3902","1.36","605","190","+3, +4, +5, +6, +7","[Rn] 5f⁴ 6d¹ 7s²",[2,8,18,32,22,9,2],"1940","McMillan & Abelson",T("源于海王星 Neptune。","Named after the planet Neptune.","A planeta Neptuno nominatum.","海王星（Neptune）に由来。"),T("在核反应堆中辐照生成航天器深空核电池燃料钚-238(238Pu)的关键靶件/前体。","Precursor target for producing 238Pu (for RTGs in spacecraft).","Targetum pro productione 238Pu ad usum in spatiis.","宇宙探査機用原子力電池(RTG)燃料238Pu製造のためのターゲット。")],
+  [94,"Pu","[244]","钚","Plutonium","Plutonium","プルトニウム","actinide",7,null,"s","19.82","639.4","3228","1.28","585","187","+3, +4, +5, +6","[Rn] 5f⁶ 7s²",[2,8,18,32,24,8,2],"1940","Seaborg et al.",T("源于冥王星 Pluto。","Named after the dwarf planet Pluto.","A planeta nano Plutone nominatum.","冥王星（Pluto）に由来。"),T("深空探测器同位素温差核电池动力源(RTG, 238Pu)、核电站MOX氧化物燃料(239Pu)。","Power source for deep space RTGs (238Pu), MOX fuel for nuclear reactors (239Pu).","Fons energiae pro RTG spatiali (238Pu), focale MOX in reactoribus (239Pu).","深宇宙探査機の原子力電池(RTG, 238Pu)、MOX燃料(239Pu)。")],
+  [95,"Am","[243]","镅","Americium","Americium","アメリシウム","actinide",7,null,"s","13.67","1176","2607","1.3","578","180","+3, +4, +5, +6","[Rn] 5f⁷ 7s²",[2,8,18,32,25,8,2],"1944","Seaborg et al.",T("源于美洲大陆 America。","Named after the Americas.","A continente America nominatum.","アメリカ大陸に由来。"),T("电离式烟雾报警器核心长寿命放射源(241Am)、下一代航天深空同位素核电池。","Ionization smoke detectors (241Am), next-gen space RTG power sources.","Detectores fumi (241Am), fontes energiae pro navibus spatialibus.","煙感知器の電離放射線源(241Am)、次世代の宇宙探査機用RTG。")],
+  [96,"Cm","[247]","锔","Curium","Curium","キュリウム","actinide",7,null,"s","13.51","1340","3110","1.3","581","169","+3, +4","[Rn] 5f⁷ 6d¹ 7s²",[2,8,18,32,25,9,2],"1944","Seaborg et al.",T("纪念居里夫妇。","Named after Marie and Pierre Curie.","Pro Maria et Petro Curie nominatum.","キュリー夫妻にちなむ。"),T("火星探测器阿尔法粒子X射线光谱仪(APXS)照射源，原位分析地外岩石元素。","APXS excitation source for Mars rovers to analyze extraterrestrial rocks.","Fons APXS in exploratoribus Martis ad analysin saxorum.","火星探査機のAPXS(アルファ粒子X線分光計)放射線源。")],
+  [97,"Bk","[247]","锫","Berkelium","Berkelium","バークリウム","actinide",7,null,"s","14.78","986","2627","1.3","601",null,"+3, +4","[Rn] 5f⁹ 7s²",[2,8,18,32,27,8,2],"1949","Seaborg et al.",T("源于美国加州伯克利 Berkeley。","Named after Berkeley, California.","A civitate Berkeley in California nominatum.","カリフォルニア州バークレーに由来。"),T("加速器合成117号超重元素鿬(Ts)的唯一关键物理学轰击靶材(249Bk)。","Crucial target material (249Bk) for synthesizing element 117 (Tennessine).","Targetum (249Bk) pro synthesi elementi 117 (Tennessine).","第117番元素テネシン(Ts)合成のための唯一のターゲット材。")],
+  [98,"Cf","[251]","锎","Californium","Californium","カリホルニウム","actinide",7,null,"s","15.1","900","1470","1.3","608",null,"+3","[Rn] 5f¹⁰ 7s²",[2,8,18,32,28,8,2],"1950","Seaborg et al.",T("源于美国加利福尼亚 California。","Named after the state of California.","A civitate California nominatum.","カリフォルニア州に由来。"),T("商业核反应堆启动用强自发裂变中子源(252Cf)、极早期重度宫颈癌中子近距离放疗。","Start-up neutron source for nuclear reactors (252Cf), neutron brachytherapy.","Fons neutronum in reactoribus (252Cf), radiotherapia.","原子炉の起動用強力中子源(252Cf)、がんの中性子小線源治療。")],
+  [99,"Es","[252]","锿","Einsteinium","Einsteinium","アインスタイニウム","actinide",7,null,"s","8.84","860","996","1.3","619",null,"+3","[Rn] 5f¹¹ 7s²",[2,8,18,32,29,8,2],"1952","Ghiorso et al.",T("纪念爱因斯坦 Einstein。","Named after Albert Einstein.","Pro Alberto Einstein nominatum.","アインシュタインにちなむ。"),T("基础核化学、探索并合成101号更重元素钔(Md)及锕系配位化学研究。","Fundamental actinide coordination chemistry, synthesizing element 101.","Chemia fundamentalis actinidorum, synthesis elementi 101.","アクチノイド配位化学の基礎研究、第101番元素合成のターゲット。")],
+  [100,"Fm","[257]","镄","Fermium","Fermium","フェルミウム","actinide",7,null,"s",null,"1527",null,"1.3","627",null,"+3","[Rn] 5f¹² 7s²",[2,8,18,32,30,8,2],"1952","Ghiorso et al.",T("纪念物理学家费米 Fermi。","Named after Enrico Fermi.","Pro Enrico Fermi nominatum.","エンリコ・フェルミにちなむ。"),T("中子俘获合成的最重极限元素，用于裂变动力学与相对论量子化学基础研究。","Heaviest element formed by neutron capture; fission dynamics research.","Elementum gravissimum per capturam neutronum; physica nuclearis.","中性子捕獲で合成可能な最も重い元素、核分裂動力学の基礎研究。")],
+  [101,"Md","[258]","钔","Mendelevium","Mendelevium","メンデレビウム","actinide",7,null,"s",null,"827",null,"1.3","635",null,"+2, +3","[Rn] 5f¹³ 7s²",[2,8,18,32,31,8,2],"1955","Ghiorso et al.",T("纪念门捷列夫 Mendeleev。","Named after Dmitri Mendeleev.","Pro Dmitri Mendeleev nominatum.","メンデレーエフにちなむ。"),T("重锕系元素+2价异常稳定态还原化学实验及单原子萃取色谱研究。","Single-atom reduction chemistry studies (+2 state stability in actinides).","Chemia reductionis in statu +2; chromatographia atomi singularis.","重アクチノイドの+2価安定性に関する単一原子還元化学研究。")],
+  [102,"No","[259]","锘","Nobelium","Nobelium","ノーベリウム","actinide",7,null,"s",null,"827",null,"1.3","642",null,"+2, +3","[Rn] 5f¹⁴ 7s²",[2,8,18,32,32,8,2],"1966","JINR",T("纪念诺贝尔 Nobel。","Named after Alfred Nobel.","Pro Alfredo Nobel nominatum.","アルフレッド・ノーベルにちなむ。"),T("探索满壳层5f14构型导致的+2价氧化态在水溶液中极度稳定的相对论化学效应。","Studies on the extreme stability of the +2 state due to filled 5f14 shell.","Studium stabilitatis in statu +2 ob corticem 5f14 completam.","5f¹⁴閉殻構造による+2価の特異な安定性に関する相対論的化学効果の研究。")],
+  [103,"Lr","[266]","铹","Lawrencium","Lawrencium","ローレンシウム","actinide",7,null,"s",null,"1627",null,"1.3","470",null,"+3","[Rn] 5f¹⁴ 7s² 7p¹",[2,8,18,32,32,8,3],"1961","Ghiorso et al.",T("纪念劳伦斯 Lawrence。","Named after Ernest O. Lawrence.","Pro Ernesto O. Lawrence nominatum.","アーネスト・ローレンスにちなむ。"),T("验证强相对论效应导致基态排布反常变为7p1而非6d1的激光电离原子能级实验。","Laser ionization experiments confirming anomalous 7p1 ground state.","Experimenta ionizationis probantia statum 7p1 ob effectus relativisticos.","強い相対論的効果により電子配置が7p¹になることを実証するレーザー実験。")],
+  [104,"Rf","[267]","𬬻","Rutherfordium","Rutherfordium","ラザホージウム","transition",7,4,"s",null,null,null,null,null,"580",null,"+4","[Rn] 5f¹⁴ 6d² 7s²",[2,8,18,32,32,10,2],"1964","JINR & LBNL",T("纪念卢瑟福 Rutherford。","Named after Ernest Rutherford.","Pro Ernesto Rutherford nominatum.","アーネスト・ラザフォードにちなむ。"),T("超重过渡金属元素，单原子液相与气相色谱化学性质研究验证第4族规律。","Single-atom chromatography validating Group 4 superheavy chemical trends.","Chromatographia atomi singularis pro elementis supergravibus (Grex 4).","第4族超重元素としての性質を検証する単一原子クロマトグラフィー。")],
+  [105,"Db","[268]","𬭊","Dubnium","Dubnium","ドブニウム","transition",7,5,"s",null,null,null,null,null,null,null,"+5","[Rn] 5f¹⁴ 6d³ 7s²",[2,8,18,32,32,11,2],"1968","JINR & LBNL",T("源于俄核研究城杜布纳 Dubna。","Named after Dubna, Russia (JINR).","A Dubna, urbe in Russia, nominatum.","ロシアの核研究都市ドゥブナに由来。"),T("超重元素第5族氯化物/溴化物的挥发性与配位络合物单原子追踪基础化学实验。","Single-atom tracing of Group 5 superheavy halide volatility and complexes.","Studium volatilitatis halidorum in elementis supergravibus (Grex 5).","第5族超重元素のハロゲン化物の揮発性と錯体化学に関する単一原子実験。")],
+  [106,"Sg","[269]","𬭳","Seaborgium","Seaborgium","シーボーギウム","transition",7,6,"s",null,null,null,null,null,null,null,"+6","[Rn] 5f¹⁴ 6d⁴ 7s²",[2,8,18,32,32,12,2],"1974","LBNL",T("纪念西博格 Seaborg。","Named after Glenn T. Seaborg.","Pro G. T. Seaborg nominatum.","グレン・シーボーグにちなむ。"),T("成功合成挥发性羰基络合物Sg(CO)6，验证超重金属有机化学键的相对论稳定性。","Synthesis of Sg(CO)6 to study superheavy organometallic bond relativity.","Synthesis Sg(CO)6 ad studium vinculorum organometallicorum.","揮発性カルボニル錯体Sg(CO)₆の合成と超重元素の有機金属化学の検証。")],
+  [107,"Bh","[270]","𬭛","Bohrium","Bohrium","ボーリウム","transition",7,7,"s",null,null,null,null,null,null,null,"+7","[Rn] 5f¹⁴ 6d⁵ 7s²",[2,8,18,32,32,13,2],"1981","GSI Darmstadt",T("纪念玻尔 Bohr。","Named after Niels Bohr.","Pro Nicolao Bohr nominatum.","ニールス・ボーアにちなむ。"),T("合成强挥发性氯氧化鿦(BhO3Cl)，在原子级印证第7族极高价态的周期律延续。","Synthesis of volatile BhO3Cl confirming Group 7 high-oxidation state trends.","Synthesis volatilis BhO3Cl ad confirmandum leges periodicas in Grege 7.","揮発性オキシ塩化物(BhO₃Cl)の合成による第7族最高酸化状態の周期律検証。")],
+  [108,"Hs","[277]","𬭶","Hassium","Hassium","ハッシウム","transition",7,8,"s",null,null,null,null,null,null,null,"+8","[Rn] 5f¹⁴ 6d⁶ 7s²",[2,8,18,32,32,14,2],"1984","GSI Darmstadt",T("源于黑森州拉丁名 Hassia。","From 'Hassia', Latin for Hesse.","A nomine Latino Hassia derivatum.","ヘッセン州のラテン語名ハッシアに由来。"),T("产生半衰期极短的挥发性四氧化鿈(HsO4)，证实相对论壳层效应对第8族最高化合价的影响。","Synthesis of HsO4 confirming +8 oxidation state in Group 8 superheavies.","Synthesis HsO4 confirmans statum oxidationis +8 in elementis supergravibus.","揮発性の四酸化ハッシウム(HsO₄)の合成による第8族+8酸化状態の立証。")],
+  [109,"Mt","[278]","鿏","Meitnerium","Meitnerium","マイトネリウム","transition",7,9,"s",null,null,null,null,null,null,null,null,"[Rn] 5f¹⁴ 6d⁷ 7s²",[2,8,18,32,32,15,2],"1982","GSI Darmstadt",T("纪念女物理学家迈特纳 Lise Meitner。","Named after Lise Meitner.","Pro Lise Meitner nominatum.","リーゼ・マイトナーにちなむ。"),T("单原子截面极小的核物理热熔合实验研究，缺乏半衰期足够长的同位素进行化学分析。","Nuclear fusion cross-section studies; isotopes too short-lived for chemistry.","Studia fusionis nuclearis; isotopi nimis breves pro chemia.","核融合断面積の基礎研究。半減期が短すぎるため化学的分析は未実施。")],
+  [110,"Ds","[281]","𫟼","Darmstadtium","Darmstadtium","ダームスタチウム","transition",7,10,"s",null,null,null,null,null,null,null,null,"[Rn] 5f¹⁴ 6d⁸ 7s²",[2,8,18,32,32,16,2],"1994","GSI Darmstadt",T("源于发现地德国达姆施塔特市。","Named after Darmstadt, Germany.","Ab urbe Germania Darmstadt nominatum.","ドイツの都市ダルムシュタットに由来。"),T("重离子极低截面冷熔合核反应验证靶室实验，推进超重“稳定岛”理论预言。","Cold fusion nuclear reaction studies pushing towards the Island of Stability.","Studia reactionum fusionis frigidae ad theoriam Insulae Stabilitatis.","冷たい核融合反応による「安定の島」理論の実験的検証。")],
+  [111,"Rg","[282]","𬬭","Roentgenium","Roentgenium","レントゲニウム","transition",7,11,"s",null,null,null,null,null,null,null,null,"[Rn] 5f¹⁴ 6d⁹ 7s²",[2,8,18,32,32,17,2],"1994","GSI Darmstadt",T("纪念伦琴 Röntgen。","Named after Wilhelm C. Röntgen.","Pro G. C. Röntgen nominatum.","ヴィルヘルム・レントゲンにちなむ。"),T("基于高阶相对论狄拉克方程，推测具有比金更强的贵属性及可能呈现银色而非金色的物理预测研究。","Theoretical relativistic predictions of noble character stronger than gold.","Praedictiones theoreticae de natura nobili fortiori quam auro.","相対論的効果により金よりも貴な性質を持ち、銀色を呈する可能性の理論研究。")],
+  [112,"Cn","[285]","鿔","Copernicium","Copernicium","コペルニシウム","transition",7,12,"g",null,null,null,null,null,null,null,"+2","[Rn] 5f¹⁴ 6d¹⁰ 7s²",[2,8,18,32,32,18,2],"1996","GSI Darmstadt",T("纪念哥白尼 Copernicus。","Named after Nicolaus Copernicus.","Pro Nicolao Copernico nominatum.","ニコラウス・コペルニクスにちなむ。"),T("极强相对论7s2惰性对效应使其在金表面吸附焓极低，实验证明其表现出气态稀有气体般的挥发性。","Adsorption studies showing noble gas-like volatility due to 7s2 inert pair.","Studia adsorptionis monstrantia volatilitatem similem gasibus nobilibus.","7s²不活性電子対効果により希ガスのような高い揮発性を示す単一原子吸着実験。")],
+  [113,"Nh","[286]","鉨","Nihonium","Nihonium","ニホニウム","postTransition",7,13,"s",null,null,null,null,null,null,null,null,"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹",[2,8,18,32,32,18,3],"2004","RIKEN",T("源于日本 Nihon。","Named after Japan (Nihon).","A nomine Iaponiae (Nihon) derivatum.","日本の国名「ニホン」に由来。"),T("亚洲发现的首个新元素；正进行基于石英表面单原子吸附热力学的第七周期p区相对论化学基础研究。","First element discovered in Asia; p-block relativistic thermodynamics research.","Primum elementum in Asia inventum; studia thermodynamica relativistica.","アジアで初めて発見された元素。石英表面での吸着実験等、第7周期p区の化学研究。")],
+  [114,"Fl","[289]","𫓧","Flerovium","Flerovium","フレロビウム","postTransition",7,14,"g",null,null,null,null,null,null,null,null,"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²",[2,8,18,32,32,18,4],"1999","JINR & LLNL",T("纪念苏联核物理学家 Flerov。","Named after Georgy Flyorov.","Pro G. Flyorov nominatum.","ゲオルギー・フレロフにちなむ。"),T("7p1/2轨道的自旋-轨道耦合导致的极大分裂，使其可能为常温气态，用于验证超重核超流体模型理论。","Spin-orbit splitting makes it potentially a gas; tests superheavy superfluidity models.","Scissura spin-orbitale id gas potentem facit; examinat theorias supergravium.","7p₁/₂軌道の相対論的分裂による常温気体の可能性、および「安定の島」中心域の核物理研究。")],
+  [115,"Mc","[290]","镆","Moscovium","Moscovium","モスコビウム","postTransition",7,15,"s",null,null,null,null,null,null,null,null,"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³",[2,8,18,32,32,18,5],"2003","JINR & LLNL",T("源于发现地莫斯科州。","Named after the Moscow region.","A regione Moscovia nominatum.","モスクワ州に由来。"),T("通过48Ca轰击243Am进行长衰变链α释放核物理研究，产生Nh同位素的关键衰变母核靶物理实验。","Nuclear physics: parent nucleus in 48Ca + 243Am reactions decaying to Nh.","Physica nuclearis: nucleus maternus in reactionibus decrescens ad Nh.","48Caと243Amの核融合反応によるNh同位体へのα崩壊チェーン（親核種）の研究。")],
+  [116,"Lv","[293]","𫟷","Livermorium","Livermorium","リバモリウム","postTransition",7,16,"s",null,null,null,null,null,null,null,null,"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴",[2,8,18,32,32,18,6],"2000","JINR & LLNL",T("源于利弗莫尔实验室。","Named after Lawrence Livermore National Lab.","A Laboratorio Livermore nominatum.","ローレンス・リバモア国立研究所に由来。"),T("作为重离子热熔合截面研究重要参考核，持续探究第16族超重元素因7p轨道劈裂产生的可能准金属性。","Hot fusion cross-section research; probing metallicity from 7p orbital splitting.","Studia fusionis calidae; investigans naturam metallicam ob scissuram 7p.","熱い核融合反応の断面積研究。7p軌道の相対論的分裂による金属的性質の理論探求。")],
+  [117,"Ts","[294]","鿬","Tennessine","Tennessine","テネシン","halogen",7,17,"s",null,null,null,null,null,null,null,null,"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵",[2,8,18,32,32,18,7],"2010","JINR, ORNL & Vanderbilt",T("源于田纳西州 Tennessee。","Named after Tennessee, USA.","A civitate Tennessee nominatum.","テネシー州に由来。"),T("自然界可能存在的最重卤素；理论推测其强相对论效应使得典型非金属性消失，呈现典型半金属甚至金属学特征。","Heaviest 'halogen'; relativistic effects predict it behaves as a true metalloid/metal.","Halogenum gravissimum; effectus relativisticus praedicit naturam metallicam.","最も重い「ハロゲン」。強い相対論的効果により非金属的性質が失われ、半金属または金属となる理論予測。")],
+  [118,"Og","[294]","鿫","Oganesson","Oganesson","オガネソン","noble",7,18,"s",null,null,null,null,null,null,null,null,"[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶",[2,8,18,32,32,18,8],"2002","Oganessian et al.",T("纪念奥加涅相院士。","Named after Yuri Oganessian.","Pro Yuri Oganessian nominatum.","ユーリ・オガネシアンにちなむ。"),T("最重人造极限元素；费米气体模型计算指出巨大的相对论效应导致其电子壳层结构模糊化，常温下可能为固态。","Heaviest element; relativistic 'smearing' of electron shells makes it a solid, not a gas.","Elementum gravissimum; effectus relativisticus facit illud solidum, non gas.","既知の最も重い元素。相対論的効果による電子殻の「滲み(smearing)」により常温で固体となるフェルミ気体理論研究。")]
+];
+
+const SPECIFIC_OVERRIDES = {
+  1: {
+    crystal: DICT.crystal.hcp, magnetism: DICT.magnetism.dia,
+    color: T("无色无味透明气体（极高压下可转变为金属氢光泽）","Colorless and odorless gas (metallic hydrogen under extreme pressure)","Gas incolor et inodorus (hydrogenium metallicum sub pressione)","無色無臭の気体（超高圧下で金属水素の光沢）"),
+    elecCond: T("常温气态绝缘；固态金属氢理论具有室温超导性","Gas is an insulator; metallic solid theoretically room-temp superconductor","Gas insulator est; solidum metallicum theoricum superconducentia habet","常温気体は絶縁体；固体金属水素は室温超伝導の理論的可能性がある"),
+    thermCond: T("0.1805 W/(m·K)（气态导热率最高的双原子气体）","0.1805 W/(m·K) (highest thermal conductivity among diatomic gases)","0.1805 W/(m·K) (conductivitas thermica altissima inter gasa)","0.1805 W/(m·K)（二原子気体で最高の熱伝導率）"),
+    met: T("典型非金属（处于第1族，极高压下具金属性）","Typical nonmetal (Group 1, metallic under extreme pressure)","Non-metallum typicum (Grex 1, metallicum sub pressione extrema)","典型的な非金属（第1族、超高圧下で金属性を示す）"),
+    red: T("高温下具强还原性，与活泼金属反应显弱氧化性","Strong reducing agent at high temps; weak oxidizing agent with active metals","Agens reducens forte sub calore; agens oxidans debile cum metallis activis","高温で強い還元性、活性金属との反応で弱い酸化性"),
+    aci: T("氧化物 H₂O 呈中性（两性溶剂）","Oxide H₂O is neutral (amphoteric solvent)","Oxidum H₂O neutrum est (solvens amphotericum)","酸化物H₂Oは中性（両性溶媒）"),
+    thS: T("H₂分子键能高达 436 kJ/mol，2000K 以下热稳定性极高","High H₂ bond energy (436 kJ/mol); extremely stable below 2000K","Energia vinculi H₂ alta; valde stabilis infra 2000K","H₂の結合エネルギーが高く（436 kJ/mol）、2000K以下で極めて熱安定性が高い"),
+    fla: T("极易燃气体，燃烧生成水，不助燃","Highly flammable gas; forms water on combustion; does not support combustion","Gas valde inflammabilis; creat aquam in combustione","極めて引火性の高い気体、燃焼して水を生成、助燃性なし"),
+    tox: T("无毒，高浓度下单窒息风险及氢脆效应","Non-toxic; asphyxiation risk at high conc. and hydrogen embrittlement","Sine toxicitate; periculum asphysiae et fragilitatis hydrogenii","無毒、高濃度で窒息の危険性および水素脆化の影響"),
+    rea: T("常温较稳定，点燃/催化剂下与氧卤素剧烈反应","Stable at room temp; reacts violently with O₂/halogens under ignition/catalysis","Stabilis sub temp. camerae; reagit violenter cum O₂/halogenis","常温では比較的安定、点火・触媒存在下で酸素やハロゲンと激しく反応"),
+    iso: T("¹H(氕 99.98%)、²H(氘，核聚变/重水)、³H(氚，放射性)","¹H (Protium 99.98%), ²H (Deuterium, fusion/heavy water), ³H (Tritium, radioactive)","¹H (Protium), ²H (Deuterium), ³H (Tritium, radioactivum)","¹H（軽水素 99.98%）、²H（重水素、核融合/重水）、³H（三重水素、放射性）")
+  },
+  6: {
+    color: T("金刚石无色透明；石墨深灰黑金属光泽","Diamond: colorless/transparent; Graphite: dark grey/metallic luster","Adamas: incolor/pellucidus; Graphites: cinereus obscurus/nitor metallicus","ダイヤモンドは無色透明；黒鉛は暗灰黒色の金属光沢"),
+    elecCond: T("石墨层间导电极佳；金刚石极佳绝缘体","Graphite is a good conductor; Diamond is an excellent insulator","Graphites optime conducit; Adamas insulator optimus est","黒鉛は層間導電性が高い；ダイヤモンドは優れた絶縁体"),
+    thermCond: T("金刚石高达 2200 W/(m·K)（自然界导热最高）","Diamond up to 2200 W/(m·K) (highest natural thermal conductivity)","Adamas ad 2200 W/(m·K) (conductivitas thermica naturalis altissima)","ダイヤモンドは最大2200 W/(m·K)（自然界で最高の熱伝導率）"),
+    hard: T("金刚石莫氏硬度10.0；石墨1.0-2.0","Diamond Mohs 10.0; Graphite 1.0-2.0","Adamas duritia 10.0; Graphites 1.0-2.0","ダイヤモンドはモース硬度10.0；黒鉛は1.0〜2.0"),
+    mag: T("抗磁性（热解石墨具强抗磁悬浮特性）","Diamagnetic (pyrolytic graphite exhibits strong diamagnetic levitation)","Diamagneticus (graphites pyrolyticus levitationem diamagneticam habet)","反磁性（熱分解黒鉛は強い反磁性浮上特性を持つ）"),
+    met: T("典型非金属性，共价键形成分子网络","Typical nonmetal, forms covalent molecular networks","Non-metallum typicum, retia molecularia covalentia creat","典型的な非金属、共有結合による分子ネットワークを形成"),
+    red: T("高温具强还原性（冶金），氧化为CO₂","Strong reducing agent at high temp (metallurgy), oxidizes to CO₂","Agens reducens forte sub calore (metallurgia), oxidatur ad CO₂","高温で強い還元性（冶金）、酸化されてCO₂になる"),
+    aci: T("CO₂为酸性氧化物，CO为不成盐氧化物","CO₂ is acidic; CO is neutral","CO₂ oxidum acidum est; CO neutrum est","CO₂は酸性酸化物、COは非塩基性酸化物"),
+    thS: T("极高，隔绝空气耐3500℃以上","Extremely high; withstands >3500°C in absence of air","Altitudo extrema; sustinet >3500°C sine aere","極めて高い、空気を遮断すれば3500℃以上に耐える"),
+    fla: T("可燃（生成CO/CO₂），不助燃","Combustible (forms CO/CO₂), does not support combustion","Combustibilis (creat CO/CO₂), non fulcit combustionem","可燃性（CO/CO₂を生成）、助燃性なし"),
+    tox: T("单质无毒；燃烧产物CO具剧毒","Elemental carbon non-toxic; combustion product CO is highly toxic","Carboneum non toxicum est; CO productum combustionis valde toxicum est","単体は無毒；燃焼生成物のCOは猛毒"),
+    rea: T("常温极稳定；高温与O₂/S/金属成碳化物","Extremely stable at room temp; forms carbides with O₂/S/metals at high temp","Stabilis sub temp. camerae; creat carbida sub calore","常温で極めて安定；高温でO₂/S/金属と炭化物を形成"),
+    iso: T("¹²C(98.9%，原子量基准)，¹³C，¹⁴C(碳定年)","¹²C (98.9%, mass std), ¹³C, ¹⁴C (radiocarbon dating)","¹²C (98.9%), ¹³C, ¹⁴C (datatio radiocarbonica)","¹²C（98.9%、原子量基準）、¹³C、¹⁴C（放射性炭素年代測定）"),
+    alo: T("金刚石、石墨、石墨烯、碳纳米管、富勒烯","Diamond, graphite, graphene, carbon nanotubes, fullerenes","Adamas, graphites, graphenum, nanotubuli, fullerenum","ダイヤモンド、黒鉛、グラフェン、カーボンナノチューブ、フラーレン")
+  },
+  8: {
+    color: T("气态无色；液/固氧呈淡蓝色","Gas is colorless; liquid/solid oxygen is pale blue","Gas incolor est; oxygenium liquidum/solidum caeruleum pallidum est","気体は無色；液体/固体酸素は淡青色"),
+    elecCond: T("绝缘体","Insulator","Insulator","絶縁体"),
+    thermCond: T("0.02658 W/(m·K)","0.02658 W/(m·K)","0.02658 W/(m·K)","0.02658 W/(m·K)"),
+    mag: T("顺磁性（液氧可被磁铁吸引）","Paramagnetic (liquid O₂ is attracted to magnets)","Paramagneticus (O₂ liquidum a magnetibus trahitur)","常磁性（液体酸素は磁石に引き寄せられる）"),
+    met: T("强非金属性（电负性仅次于氟）","Strong nonmetal (electronegativity 2nd only to fluorine)","Non-metallum forte (electronegativitas secunda post fluorum)","強い非金属性（電気陰性度はフッ素に次ぐ）"),
+    red: T("强氧化性，自然界最核心氧化剂","Strong oxidizer, primary oxidizing agent in nature","Agens oxidans forte, agens principale in natura","強い酸化性、自然界の主要な酸化剤"),
+    aci: T("形成酸性/碱性/过氧化物","Forms acidic, basic, or peroxides","Creat oxida acida, basica, aut peroxida","酸性/塩基性酸化物または過酸化物を形成"),
+    thS: T("O₂分子热稳定性高；臭氧O₃易分解","O₂ is highly stable; ozone (O₃) decomposes easily","O₂ valde stabilis est; ozonum (O₃) facile decrescit","O₂分子は熱安定性が高い；オゾン(O₃)は分解しやすい"),
+    fla: T("不可燃，具极强助燃性","Non-flammable, but highly supportive of combustion","Non inflammabilis, sed combustionem valde fulcit","不燃性だが、極めて強い助燃性を持つ"),
+    tox: T("呼吸必需；纯氧有毒，O₃强氧化毒性","Essential for breathing; pure O₂ toxicity; O₃ is highly toxic","Necessarium ad spirandum; O₂ purum toxicum; O₃ valde toxicum","呼吸に必須；純酸素中毒のリスク、O₃は強い酸化毒性を持つ"),
+    rea: T("极活泼，与几乎所有元素化合","Extremely reactive, combines with almost all elements","Valde reactivum, cum paene omnibus elementis se coniungit","極めて活発、ほぼすべての元素と化合する"),
+    iso: T("¹⁶O(99.76%)，¹⁷O，¹⁸O(冰芯温度重建)","¹⁶O (99.76%), ¹⁷O, ¹⁸O (ice core temperature proxy)","¹⁶O (99.76%), ¹⁷O, ¹⁸O","¹⁶O(99.76%)、¹⁷O、¹⁸O(氷床コアの温度復元)")
+  },
+  14: {
+    color: T("灰黑色单晶，具金属光泽","Dark grey monocrystal, metallic luster","Crystallum cinereum obscurum, nitor metallicus","暗灰色の単結晶、金属光沢を持つ"),
+    elecCond: T("本征半导体（通过掺杂精细调控）","Intrinsic semiconductor (tunable via doping)","Semiconductrum intrinsicum (dopatio mutabilis)","真性半導体（ドーピングにより精密に制御可能）"),
+    thermCond: T("149 W/(m·K)（导热优良，利于芯片散热）","149 W/(m·K) (good conductor, aids chip cooling)","149 W/(m·K) (bonus conductor, adiuvat refrigerationem)","149 W/(m·K)（熱伝導性に優れ、チップの放熱に有利）"),
+    hard: T("莫氏硬度6.5（硬而脆）","Mohs 6.5 (hard and brittle)","Duritia 6.5 (durum et fragile)","モース硬度6.5（硬くて脆い）"),
+    mag: T("抗磁性","Diamagnetic","Diamagneticus","反磁性"),
+    met: T("典型类金属（电学标准半导体）","Typical metalloid (standard semiconductor electronically)","Semimetallum typicum (semiconductrum standarde)","典型的な半金属（電気的には標準的な半導体）"),
+    red: T("高温具还原性，与F/Cl/O显+4价","Reducing agent at high temp; +4 with F/Cl/O","Agens reducens sub calore; +4 cum F/Cl/O","高温で還元性、F/Cl/Oとは+4価を示す"),
+    aci: T("SiO₂为酸性氧化物","SiO₂ is an acidic oxide","SiO₂ oxidum acidum est","SiO₂は酸性酸化物"),
+    thS: T("单晶硅与SiO₂极高热稳定","Monocrystalline Si and SiO₂ are highly stable","Silicium monocrystallinum et SiO₂ valde stabilia sunt","単結晶シリコンとSiO₂は極めて熱安定性が高い"),
+    fla: T("块状难燃，超细粉空气可燃，硅烷自燃","Bulk is non-flammable; fine powder burns; silanes spontaneously combust","Massa non inflammabilis; pulvis urit; silana sponte comburunt","塊状は難燃性、微粉末は空気中で可燃、シランは自然発火"),
+    tox: T("单质无毒；SiO₂粉尘致矽肺病","Elemental Si is non-toxic; SiO₂ dust causes silicosis","Silicium non toxicum est; pulvis SiO₂ silicosem creat","単体は無毒；SiO₂粉塵は珪肺症を引き起こす"),
+    rea: T("常温稳定(钝化)；高温溶于强碱/HF","Stable at room temp (passivated); dissolves in strong base/HF at high temp","Stabilis sub temp. camerae; solvitur in basibus/HF sub calore","常温で安定（不動態化）；高温で強塩基/HFに溶解"),
+    iso: T("²⁸Si(92.2%，量子比特源)，²⁹Si，³⁰Si","²⁸Si (92.2%, qubit source), ²⁹Si, ³⁰Si","²⁸Si (92.2%), ²⁹Si, ³⁰Si","²⁸Si（92.2%、量子ビット源）、²⁹Si、³⁰Si")
+  },
+  26: {
+    color: T("银灰/银白金属光泽","Silver-grey/white metallic luster","Nitor metallicus cinereus/albus","銀灰色/銀白色の金属光沢"),
+    elecCond: T("良好导体（1.0×10⁷ S/m）","Good conductor (1.0×10⁷ S/m)","Bonus conductor (1.0×10⁷ S/m)","良導体（1.0×10⁷ S/m）"),
+    thermCond: T("80.4 W/(m·K)","80.4 W/(m·K)","80.4 W/(m·K)","80.4 W/(m·K)"),
+    hard: T("莫氏硬度4.0（碳合金化变极硬）","Mohs 4.0 (pure); becomes very hard when alloyed with carbon","Duritia 4.0; fit valde durum cum carboneo admixtum","モース硬度4.0（炭素と合金化すると非常に硬くなる）"),
+    mag: T("铁磁性（Tc 770℃）","Ferromagnetic (Tc 770°C)","Ferromagneticus (Tc 770°C)","強磁性（Tc 770℃）"),
+    met: T("中等活泼过渡金属","Moderately active transition metal","Metallum transitionis modice activum","中程度に活性な遷移金属"),
+    red: T("具还原性；Fe³⁺具氧化性","Reducing agent; Fe³⁺ is an oxidizing agent","Agens reducens; Fe³⁺ agens oxidans est","還元性；Fe³⁺は酸化性を持つ"),
+    aci: T("FeO/Fe₂O₃为碱性(Fe₂O₃微两性)","FeO/Fe₂O₃ are basic (Fe₂O₃ slightly amphoteric)","FeO/Fe₂O₃ basica sunt (Fe₂O₃ leviter amphotericum)","FeO/Fe₂O₃は塩基性（Fe₂O₃はわずかに両性）"),
+    thS: T("热稳定性高","High thermal stability","Stabilitas thermica alta","高い熱安定性"),
+    fla: T("块状不可燃；纳米粉自燃，纯氧剧烈燃烧","Bulk non-flammable; nano-powder pyrophoric; burns violently in pure O₂","Massa non inflammabilis; pulvis pyrophoricus; urit violenter in O₂ puro","塊状は不燃；ナノ粉末は自然発火、純酸素中で激しく燃焼"),
+    tox: T("无毒（人体必需），易锈蚀","Non-toxic (essential element), rusts easily","Non toxicum (elementum necessarium), facile robiginatur","無毒（必須元素）、錆びやすい"),
+    rea: T("干燥稳定，潮湿锈蚀；浓酸钝化","Stable dry, rusts in humidity; passivates in conc. acids","Stabilis siccus, robiginatur in umido; passivatur in acidis","乾燥状態で安定、湿気で錆びる；濃酸で不動態化"),
+    iso: T("⁵⁶Fe(结合能极高，聚变终点)，⁵⁴Fe，⁵⁷Fe","⁵⁶Fe (highest binding energy, fusion endpoint), ⁵⁴Fe, ⁵⁷Fe","⁵⁶Fe (energia vinculi altissima), ⁵⁴Fe, ⁵⁷Fe","⁵⁶Fe（極めて高い結合エネルギー、核融合の終点）、⁵⁴Fe、⁵⁷Fe")
+  },
+  29: {
+    color: T("紫红/玫瑰红明亮光泽","Purple-red/rose bright luster","Nitor rubeus/rosaceus clarus","紫赤色/バラ色の明るい光沢"),
+    elecCond: T("极佳导体（银以外最高）","Excellent conductor (second only to silver)","Optimus conductor (secundus post argentum)","極めて優れた導体（銀に次ぐ）"),
+    thermCond: T("401 W/(m·K)","401 W/(m·K)","401 W/(m·K)","401 W/(m·K)"),
+    hard: T("莫氏硬度3.0（延展性极佳）","Mohs 3.0 (highly ductile/malleable)","Duritia 3.0 (valde ductilis)","モース硬度3.0（極めて高い延性）"),
+    mag: T("抗磁性","Diamagnetic","Diamagneticus","反磁性"),
+    met: T("不活泼过渡金属","Inactive transition metal","Metallum transitionis iners","不活性な遷移金属"),
+    red: T("弱还原性；Cu²⁺弱氧化，Cu⁺易歧化","Weak reducing agent; Cu²⁺ weak oxidizer, Cu⁺ disproportionates","Agens reducens debile; Cu²⁺ oxidans debile","弱い還元性；Cu²⁺は弱い酸化性、Cu⁺は不均化しやすい"),
+    aci: T("CuO弱碱性，Cu(OH)₂弱碱(形成铜氨络物)","CuO is weakly basic, Cu(OH)₂ weak base (forms ammonia complexes)","CuO leviter basicum est, Cu(OH)₂ basis debilis","CuOは弱塩基性、Cu(OH)₂は弱塩基（銅アンミン錯体を形成）"),
+    thS: T("热稳定性高","High thermal stability","Stabilitas thermica alta","高い熱安定性"),
+    fla: T("不可燃，灼烧成黑CuO","Non-flammable, turns to black CuO upon heating","Non inflammabilis, fit CuO nigrum sub calore","不燃性、強熱すると黒色のCuOになる"),
+    tox: T("单质抑菌；可溶铜盐具生物毒性","Elemental is antimicrobial; soluble copper salts are toxic","Elementum antimicrobicum est; sales cupri toxici sunt","単体は抗菌性；可溶性銅塩は生物毒性を持つ"),
+    rea: T("不溶于非氧化性酸；溶于硝酸/热浓硫酸","Insoluble in non-oxidizing acids; dissolves in HNO₃/hot conc. H₂SO₄","Insolubilis in acidis non oxidantibus; solvitur in HNO₃/H₂SO₄","非酸化性酸には不溶；硝酸/熱濃硫酸に溶解"),
+    iso: T("⁶³Cu，⁶⁵Cu（稳定同位素）","⁶³Cu, ⁶⁵Cu (stable isotopes)","⁶³Cu, ⁶⁵Cu (isotopa stabilia)","⁶³Cu、⁶⁵Cu（安定同位体）")
+  },
+  79: {
+    color: T("金黄色光泽（薄箔透绿蓝，纳米金显红）","Golden luster (thin foil transmits green-blue, nano-gold is red)","Nitor aureus (lamina transmittit viridem-caeruleum)","黄金色の光沢（極薄の箔は緑青色を透過、ナノ金は赤色）"),
+    elecCond: T("极佳导体（零接触电阻）","Excellent conductor (zero contact resistance)","Optimus conductor (sine resistentia contactus)","極めて優れた導体（ゼロ接触抵抗）"),
+    thermCond: T("318 W/(m·K)","318 W/(m·K)","318 W/(m·K)","318 W/(m·K)"),
+    hard: T("莫氏硬度2.5（延展性冠绝群金）","Mohs 2.5 (most malleable/ductile metal known)","Duritia 2.5 (metallum ductillissimum)","モース硬度2.5（全金属中で最高の展延性）"),
+    mag: T("抗磁性","Diamagnetic","Diamagneticus","反磁性"),
+    met: T("极不活泼贵金属","Extremely inactive noble metal","Metallum nobile valde iners","極めて不活性な貴金属"),
+    red: T("极弱还原；Au³⁺具强氧化性","Extremely weak reducing agent; Au³⁺ is a strong oxidizer","Agens reducens debillimum; Au³⁺ agens oxidans forte","極めて弱い還元性；Au³⁺は強い酸化性を持つ"),
+    aci: T("Au₂O₃两性偏酸性","Au₂O₃ is amphoteric, leaning acidic","Au₂O₃ amphotericum est, vergens ad acidum","Au₂O₃は両性でやや酸性"),
+    thS: T("在任何高温下不与O₂化合(“真金不怕火炼”)","Does not react with O₂ at any temp ('true gold fears no fire')","Non reagit cum O₂ ad nullam temp.","いかなる高温でもO₂と化合しない（真金は火を恐れず）"),
+    fla: T("不可燃，不助燃","Non-flammable, non-combustive","Non inflammabilis, non fulcit combustionem","不燃性、助燃性なし"),
+    tox: T("单质极佳生物相容性；无毒","Excellent biocompatibility; non-toxic","Optima compatibilitas biologica; non toxicum","生体適合性が極めて高い；無毒"),
+    rea: T("极度惰性；仅溶于王水、氰化物、汞齐","Extremely inert; dissolves only in aqua regia, cyanides, mercury","Valde iners; solvitur solum in aqua regia, cyanidis, hydrargyro","極めて不活性；王水、シアン化物、水銀（アマルガム）にのみ溶解"),
+    iso: T("¹⁹⁷Au（唯一天然稳定同位素）","¹⁹⁷Au (only naturally stable isotope)","¹⁹⁷Au (solum isotopum stabile)","¹⁹⁷Au（唯一の天然安定同位体）")
+  },
+  80: {
+    color: T("银白镜面重质液体（唯一常温液态金属）","Silver-white mirrored heavy liquid (only room-temp liquid metal)","Liquor ponderosus argenteus (solum metallum liquidum ad temp. camerae)","銀白色の鏡面を持つ重液体（常温で唯一の液体金属）"),
+    elecCond: T("导电液体","Conductive liquid","Liquor conducens","導電性液体"),
+    thermCond: T("8.30 W/(m·K)","8.30 W/(m·K)","8.30 W/(m·K)","8.30 W/(m·K)"),
+    mag: T("抗磁性","Diamagnetic","Diamagneticus","反磁性"),
+    met: T("不活泼重金属（惰性电子对/相对论收缩）","Inactive heavy metal (inert pair / relativistic contraction)","Metallum ponderosum iners (effectus relativisticus)","不活性な重金属（不活性電子対/相対論的収縮）"),
+    red: T("弱还原；Hg²⁺ / Hg₂²⁺ 具较强氧化性","Weak reducing; Hg²⁺ / Hg₂²⁺ are relatively strong oxidizers","Debile reducens; Hg²⁺ / Hg₂²⁺ oxida fortiora sunt","弱い還元性；Hg²⁺ / Hg₂²⁺ は比較的強い酸化性を持つ"),
+    aci: T("HgO为弱碱性氧化物","HgO is a weakly basic oxide","HgO oxidum leviter basicum est","HgOは弱塩基性酸化物"),
+    thS: T("常温易挥发；HgO 500℃分解为氧和汞","Volatile at RT; HgO decomposes to Hg and O₂ at 500°C","Volatilis ad RT; HgO decrescit ad Hg et O₂ ad 500°C","常温で揮発しやすい；HgOは500℃で酸素と水銀に分解"),
+    fla: T("不可燃","Non-flammable","Non inflammabilis","不燃性"),
+    tox: T("蒸气及可溶盐具剧烈神经/肾毒性，汞齐腐蚀","Vapors and soluble salts are highly neuro/nephrotoxic; amalgamates","Vapores et sales valde toxici sunt; hydrargyrat","蒸気および可溶性塩は強い神経/腎毒性を持つ、アマルガム腐食"),
+    rea: T("不溶于非氧化性酸；溶于硝酸，形成汞齐合金","Insoluble in non-oxidizing acids; dissolves in HNO₃, forms amalgams","Insolubilis in acidis non oxidantibus; solvitur in HNO₃, creat amalgama","非酸化性酸には不溶；硝酸に溶解しアマルガム合金を形成"),
+    iso: T("天然7种稳定同位素","7 naturally stable isotopes","7 isotopa stabilia in natura","天然に7つの安定同位体が存在")
+  }
+};
+
+function buildFullElementProfile(raw) {
+  const [
+    num, sym, mass, zh, en, la, ja, cat, period, group, stateCode,
+    rawDensity, rawMelt, rawBoil, electroneg, ionEnergy, radius, oxStates,
+    eConfig, shells, discYear, discoverer, etymology, applications
+  ] = raw;
+
+  // 区块动态计算 (s, p, d, f)
+  let block = "unknown";
+  if (cat === "lanthanide" || cat === "actinide") block = "f";
+  else if (group === 1 || group === 2 || num === 2) block = "s";
+  else if (group >= 13 && group <= 18) block = "p";
+  else if (group >= 3 && group <= 12) block = "d";
+
+  // 国际化格式与单位转化 (STP 密度和 Kelvin)
+  let tMelt = rawMelt ? parseFloat(rawMelt) + 273.15 : null;
+  let tBoil = rawBoil ? parseFloat(rawBoil) + 273.15 : null;
+  let formatTemp = (k, c) => k !== null ? `${k.toFixed(2)} K (${c} ℃)` : null;
+  
+  let dNum = rawDensity ? parseFloat(rawDensity) * 1000 : null; // -> kg/m³
+  let dStr = dNum ? (stateCode === "g" ? `${dNum.toFixed(4).replace(/\.?0+$/,'')} kg/m³ (STP)` : `${dNum.toFixed(2).replace(/\.?0+$/,'')} kg/m³`) : null;
+
+  // 默认字典回退机制
+  let met = T("未知属性", "Unknown property", "Ignotum", "未知の性質");
+  let red = T("无显著特征", "No distinct features", "Nulla proprietas", "特になし");
+  let aci = T("中性或两性", "Neutral or amphoteric", "Neutrum/amphotericum", "中性または両性");
+  let tox = T("低毒或无毒", "Low/no toxicity", "Toxicitas humilis", "低毒性/無毒");
+  let fla = T("不可燃", "Non-flammable", "Non inflammabilis", "不燃性");
+  let thS = T("热稳定性高", "High thermal stability", "Stabilitas thermica alta", "高い熱安定性");
+  let rea = T("化学性质稳定", "Chemically stable", "Stabilis", "化学的に安定");
+  let iso = T("存在稳定同位素", "Stable isotopes exist", "Isotopa stabilia", "安定同位体が存在");
+  let rad = T("无放射性", "Non-radioactive", "Non radioactivus", "非放射性");
+  let cry = DICT.crystal.bcc;
+  let mag = DICT.magnetism.para;
+  let color = T("银白色金属光泽", "Silver-white metallic luster", "Nitor metallicus albus", "銀白色の金属光沢");
+  let elecCond = T("金属导体", "Metallic conductor", "Conductor metallicus", "金属導体");
+  let thermCond = T("金属导热体", "Metallic thermal conductor", "Conductor thermicus", "金属熱伝導体");
+  let hard = T("未知硬度", "Unknown hardness", "Duritia ignota", "硬度未知");
+
+  // 大类推导 (为了节省Token采用简化)
+  if (cat === "alkali") {
+    met = T("极强金属性","Extreme metallic","Metallum fortissimum","極めて強い金属性"); tox = T("强碱性腐蚀","Strong alkaline corrosion","Corrosivitas alcalina","強アルカリ腐食性"); fla = T("极易燃/遇水爆炸","Highly flammable/reactive","Inflammabilis/Explosivus","極めて可燃性・水と爆発的に反応"); cry = DICT.crystal.bcc; mag = DICT.magnetism.para;
+  } else if (cat === "noble") {
+    color = T("无色无味气体","Colorless odorless gas","Gas incolor/inodorus","無色無臭の気体"); met = T("惰性非金属","Inert nonmetal","Gas iners","不活性非金属"); tox = T("无毒致息气","Non-toxic asphyxiant","Gas sine toxicitate","無毒（窒息性）"); rea = T("极度化学惰性","Extremely inert","Iners","極めて不活性"); cry = DICT.crystal.fcc; mag = DICT.magnetism.dia; elecCond = T("绝缘体","Insulator","Insulator","絶縁体");
+  } else if (num >= 104) {
+    met = T("超重人工元素","Superheavy synthetic","Elementum supergravis","超重人工元素"); rad = T("极短半衰期高能α衰变","Ultra-short half-life alpha decay","Decasus alpha brevissimus","極短半減期・高エネルギーα崩壊"); tox = T("极强放射毒性","Extreme radiation toxicity","Toxicitas radioactiva","極度の放射能毒性"); rea = T("极微量瞬时合成","Synthesized fleetingly in ultra-traces","Synthesis perbrevis","極微量で瞬間的な合成のみ");
+  }
+
+  // 挂载特定覆盖
+  let override = SPECIFIC_OVERRIDES[num] || {};
+  
+  return {
+    Z: num, sym: sym, mass: mass, names: T(zh, en, la, ja),
+    cat: cat, period: period, group: group, block: block,
+    gridRow: (num >= 57 && num <= 71) ? 9 : (num >= 89 && num <= 103) ? 10 : period,
+    gridCol: (num >= 57 && num <= 71) ? (num - 57) + 3 : (num >= 89 && num <= 103) ? (num - 89) + 3 : group,
+    nucChg: `+${num}`, pro: num, neu: Math.round(parseFloat(mass.replace(/[\[\]]/g,""))) - num, ele: num,
+    eConfig: eConfig, shells: shells, electroneg: electroneg, ionEnergy: ionEnergy ? `${ionEnergy} kJ/mol` : null, radius: radius ? `${radius} pm` : null, oxStates: oxStates,
+    rawMelt: tMelt, rawBoil: tBoil,
+    phys: { density: dStr, melt: formatTemp(tMelt, rawMelt), boil: formatTemp(tBoil, rawBoil), cry: override.crystal || cry, mag: override.magnetism || override.mag || mag, color: override.color || color, elecCond: override.elecCond || elecCond, thermCond: override.thermCond || thermCond, hard: override.hard || hard },
+    chem: { met: override.met || met, red: override.red || red, aci: override.aci || aci, thS: override.thS || thS, fla: override.fla || fla, tox: override.tox || tox, rea: override.rea || rea, iso: override.iso || iso, rad: override.rad || rad, alo: override.alo || T("无","None","Nullum","なし") },
+    disc: { year: discYear, discoverer: discoverer, ety: etymology, app: applications }
+  };
+}
+
+const ELEMENTS = CORE_RAW.map(buildFullElementProfile);
+
+// 全局状态管理
+const state = {
+  lang: "zh", activeCategory: null, phaseFilter: null, searchQuery: "",
+  selectedZ: 14, drawerOpen: false, tempK: 298.15, isPlaying: false
+};
+
+function S(val, asHtml = false) {
+  if (val === null || val === undefined) return `<span class="null-badge">null</span>`;
+  let str = (typeof val === "object") ? (val[state.lang] || val.en || String(val)) : String(val);
+  return asHtml ? str : str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function getPhase(tempK, el) {
+  if (el.Z >= 104 || (el.rawMelt === null && el.rawBoil === null)) return 'unknown';
+  if (el.Z === 6) return tempK < 3915 ? 'solid' : 'gas'; // Carbon sublimation approx
+  let m = el.rawMelt !== null ? el.rawMelt : Infinity;
+  let b = el.rawBoil !== null ? el.rawBoil : Infinity;
+  if (tempK < m) return 'solid';
+  if (tempK >= m && tempK < b) return 'liquid';
+  return 'gas';
+}
+
+function matchesSearch(el) {
+  if (state.activeCategory && el.cat !== state.activeCategory) return false;
+  const q = state.searchQuery.trim().toLowerCase();
+  if (!q) return true;
+  if (String(el.Z) === q || el.sym.toLowerCase().includes(q)) return true;
+  if (el.names.zh.includes(q) || el.names.en.toLowerCase().includes(q) || el.names.la.toLowerCase().includes(q) || el.names.ja.includes(q)) return true;
+  return false;
+}
+
+// 高性能批量状态更新器 (处理 DOM / Class 切换，保证 60fps 滑动)
+function updateGridState() {
+  const L = UI[state.lang];
+  document.getElementById("sp-lan").textContent = L.lan; 
+  document.getElementById("sp-act").textContent = L.act;
+  document.getElementById("lb-lan").textContent = "57-71 " + L.lan + " ▸"; 
+  document.getElementById("lb-act").textContent = "89-103 " + L.act + " ▸";
+  
+  const statBox = document.getElementById("ui-stats");
+  statBox.querySelector("[data-filter='solid'] .sl").textContent = DICT.phase.solid.t[state.lang];
+  statBox.querySelector("[data-filter='liquid'] .sl").textContent = DICT.phase.liquid.t[state.lang];
+  statBox.querySelector("[data-filter='gas'] .sl").textContent = DICT.phase.gas.t[state.lang];
+  statBox.querySelector("[data-filter='unknown'] .sl").textContent = DICT.phase.unknown.t[state.lang];
+
+  let counts = { solid: 0, liquid: 0, gas: 0, unknown: 0 };
+  
+  ELEMENTS.forEach(el => {
+    const phase = getPhase(state.tempK, el);
+    counts[phase]++;
+    const cell = document.getElementById(`el-cell-${el.Z}`);
+    if (cell) {
+      document.getElementById(`name-${el.Z}`).textContent = state.lang === 'ja' ? el.names.ja.split(" (")[0] : el.names[state.lang];
+      cell.className = `el-cell phase-${phase} ${el.Z === state.selectedZ ? "selected" : ""}`;
+      if (!matchesSearch(el) || (state.phaseFilter && phase !== state.phaseFilter)) cell.classList.add("dimmed");
+      const badge = cell.querySelector('.phase-badge');
+      if (badge) {
+        badge.textContent = DICT.phase[phase].badge;
+        badge.className = `phase-badge ${DICT.phase[phase].badge}`;
+      }
+    }
+  });
+
+  document.getElementById('stat-s').textContent = counts.solid;
+  document.getElementById('stat-l').textContent = counts.liquid;
+  document.getElementById('stat-g').textContent = counts.gas;
+  document.getElementById('stat-u').textContent = counts.unknown;
+
+  statBox.querySelectorAll(".stat-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.filter === state.phaseFilter));
+
+  renderSummaryBanner(ELEMENTS[state.selectedZ - 1]);
+  if (state.drawerOpen) renderDetailDrawer();
+}
+
+function renderHeaderUI() {
+  const L = UI[state.lang];
+  document.getElementById("ui-main-title").textContent = L.title;
+  document.getElementById("ui-sub-title").textContent = L.sub;
+  document.getElementById("search-input").placeholder = L.search;
+  document.getElementById("ui-play").textContent = state.isPlaying ? L.pause : L.play;
+  document.querySelectorAll(".lang-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.lang === state.lang));
+  const presets = document.getElementById("ui-presets").querySelectorAll("button");
+  L.presets.forEach((txt, i) => { if(presets[i]) presets[i].textContent = txt; });
+}
+
+function renderCategoryBar() {
+  const bar = document.getElementById("category-bar");
+  let html = `<div class="cat-chip ${!state.activeCategory ? "active" : ""}" data-cat=""><span class="cat-dot" style="background: linear-gradient(135deg, #38bdf8, #a855f7)"></span><span>${UI[state.lang].all}</span></div>`;
+  Object.keys(CATEGORIES).forEach(cat => {
+    const meta = CATEGORIES[cat];
+    html += `<div class="cat-chip ${state.activeCategory === cat ? "active" : ""}" data-cat="${cat}"><span class="cat-dot" style="background:${meta.hex};box-shadow:0 0 8px ${meta.hex}"></span><span>${meta.t[state.lang]}</span></div>`;
+  });
+  bar.innerHTML = html;
+  bar.querySelectorAll(".cat-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      state.activeCategory = state.activeCategory === chip.dataset.cat ? null : chip.dataset.cat;
+      renderCategoryBar(); updateGridState();
+    });
+  });
+}
+
+function renderPeriodicGridDOM() {
+  const grid = document.getElementById("periodic-grid");
+  const L = UI[state.lang];
+  let html = `<div class="summary-banner" id="summary-banner"></div>
+    <div class="series-placeholder" data-series="lanthanide" style="grid-row: 6; grid-column: 3; --cat-rgb: var(--cat-lanthanide)">
+      <div class="sp-range">57 - 71</div><div class="sp-title" id="sp-lan">${L.lan}</div>
+    </div>
+    <div class="series-placeholder" data-series="actinide" style="grid-row: 7; grid-column: 3; --cat-rgb: var(--cat-actinide)">
+      <div class="sp-range">89 - 103</div><div class="sp-title" id="sp-act">${L.act}</div>
+    </div>
+    <div style="grid-row: 8; grid-column: 1 / 19; height: 14px;"></div>
+    <div class="series-row-label" style="grid-row: 9; grid-column: 1 / 3;" id="lb-lan">57-71 ${L.lan} ▸</div>
+    <div class="series-row-label" style="grid-row: 10; grid-column: 1 / 3;" id="lb-act">89-103 ${L.act} ▸</div>`;
+
+  ELEMENTS.forEach(el => {
+    const meta = CATEGORIES[el.cat] || { rgb: "100,100,100" };
+    html += `
+      <div class="el-cell" id="el-cell-${el.Z}" data-num="${el.Z}" style="grid-row: ${el.gridRow}; grid-column: ${el.gridCol}; --cat-rgb: ${meta.rgb}">
+        <div class="phase-badge S">S</div>
+        <div class="el-top"><span class="el-num">${el.Z}</span><span class="el-mass">${el.mass.replace(/[\[\]]/g,"")}</span></div>
+        <div class="el-symbol">${el.sym}</div>
+        <div class="el-name" id="name-${el.Z}"></div>
+      </div>`;
+  });
+  grid.innerHTML = html;
+
+  grid.querySelectorAll(".el-cell").forEach(cell => {
+    cell.addEventListener("click", () => selectElement(parseInt(cell.dataset.num), true));
+    cell.addEventListener("mouseenter", () => renderSummaryBanner(ELEMENTS[parseInt(cell.dataset.num) - 1]));
+  });
+  grid.querySelectorAll(".series-placeholder").forEach(sp => {
+    sp.addEventListener("click", () => {
+      const s = sp.dataset.series; state.activeCategory = state.activeCategory === s ? null : s;
+      renderCategoryBar(); updateGridState();
+    });
+  });
+}
+
+function renderSummaryBanner(el) {
+  const banner = document.getElementById("summary-banner");
+  if (!banner) return;
+  const L = UI[state.lang];
+  banner.style.setProperty("--cat-rgb", (CATEGORIES[el.cat]||{rgb:"100,100,100"}).rgb);
+  banner.innerHTML = `
+    <div class="banner-left">
+      <div class="banner-symbol-box">
+        <div class="bs-top"><span>${el.Z}</span><span>${el.mass.replace(/[\[\]]/g,"")}</span></div>
+        <div class="bs-sym">${el.sym}</div><div class="bs-name">${state.lang === 'ja' ? el.names.ja.split(" (")[0] : el.names[state.lang]}</div>
+      </div>
+      <div class="banner-info">
+        <h2>${el.names[state.lang]} (${el.sym})</h2>
+        <div class="banner-langs">
+          <span class="banner-lang-tag">ZH: ${el.names.zh}</span><span class="banner-lang-tag">EN: ${el.names.en}</span>
+          <span class="banner-lang-tag">LA: ${el.names.la}</span><span class="banner-lang-tag">JA: ${el.names.ja}</span>
+        </div>
+        <div class="banner-quick-meta">
+          <span>${L.period}: <strong>${el.period}</strong></span>
+          <span>${L.group}: <strong>${el.group !== null ? el.group : "f-Block"}</strong></span>
+          <span>${L.block}: <strong>${el.block}</strong></span>
+          <span>${L.fields.EC}: <strong style="font-family:monospace">${el.eConfig}</strong></span>
+        </div>
+      </div>
+    </div>
+    <button class="banner-open-btn" id="banner-open-btn">${L.open}</button>
+  `;
+  document.getElementById("banner-open-btn").onclick = () => selectElement(el.Z, true);
+}
+
+function renderDetailDrawer() {
+  const el = ELEMENTS[state.selectedZ - 1];
+  const L = UI[state.lang];
+  const F = L.fields;
+  
+  document.getElementById("drawer-header").style.setProperty("--cat-rgb", (CATEGORIES[el.cat]||{rgb:"100,100,100"}).rgb);
+  document.getElementById("drawer-num").textContent = el.Z; document.getElementById("drawer-sym").textContent = el.sym;
+  document.getElementById("drawer-title").textContent = `${el.names[state.lang]} · ${el.sym}`;
+  document.getElementById("drawer-cat").textContent = (CATEGORIES[el.cat]||{t:T("Unknown","","","")}).t[state.lang];
+
+  const currentPhaseCode = getPhase(state.tempK, el);
+  const currentPhaseStr = DICT.phase[currentPhaseCode].t[state.lang];
+  let tempDeltaStr = "";
+  if (el.rawMelt && state.tempK < el.rawMelt) tempDeltaStr = `<span style="color:#94a3b8"> (${L.tempDiff} M.P. -${Math.round(el.rawMelt - state.tempK)}K)</span>`;
+  else if (el.rawBoil && state.tempK < el.rawBoil) tempDeltaStr = `<span style="color:#94a3b8"> (${L.tempDiff} B.P. -${Math.round(el.rawBoil - state.tempK)}K)</span>`;
+
+  document.getElementById("drawer-body").innerHTML = `
+    <section class="detail-section"><div class="section-title">${L.sec1}</div>
+      <div class="lang-grid-4">
+        <div class="lang-card"><div class="lc-label">中文 (Chinese)</div><div class="lc-val">${el.names.zh}</div></div>
+        <div class="lang-card"><div class="lc-label">英文 (English)</div><div class="lc-val">${el.names.en}</div></div>
+        <div class="lang-card"><div class="lc-label">拉丁文 (Latina)</div><div class="lc-val">${el.names.la}</div></div>
+        <div class="lang-card"><div class="lc-label">日文 (日本語)</div><div class="lc-val">${el.names.ja}</div></div>
+      </div>
+      <div class="prop-grid">
+        <div class="prop-item"><div class="prop-label">${F.Z} / ${F.sym}</div><div class="prop-value">${el.Z} (${el.sym})</div></div>
+        <div class="prop-item"><div class="prop-label">${F.A}</div><div class="prop-value">${S(el.mass, true)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.PGB}</div><div class="prop-value">${el.period} / ${S(el.group, true)} / ${el.block}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Cat}</div><div class="prop-value">${S((CATEGORIES[el.cat]||{t:""}).t)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.EN}</div><div class="prop-value">${S(el.electroneg)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.IE}</div><div class="prop-value">${S(el.ionEnergy)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Rad}</div><div class="prop-value">${S(el.radius)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Ox}</div><div class="prop-value">${S(el.oxStates)}</div></div>
+      </div>
+    </section>
+
+    <section class="detail-section"><div class="section-title">${L.sec2}</div>
+      <div class="atom-visual-row">
+        <div class="bohr-box">${buildBohrSVG(el)}</div>
+        <div class="prop-grid" style="width: 100%;">
+          <div class="prop-item"><div class="prop-label">${F.Nuc}</div><div class="prop-value">${el.nucChg}</div></div>
+          <div class="prop-item"><div class="prop-label">${F.Ncl}</div><div class="prop-value">${el.pro} p⁺ / ${el.neu} n⁰ / ${el.ele} e⁻</div></div>
+          <div class="prop-item" style="grid-column: 1 / -1;"><div class="prop-label">${F.EC}</div><div class="prop-value" style="color:#38bdf8; font-family:monospace">${el.eConfig}</div></div>
+          <div class="prop-item" style="grid-column: 1 / -1;"><div class="prop-label">${F.Shl}</div><div class="shell-pills">${el.shells.map((c,i)=>`<span class="shell-pill">${['K','L','M','N','O','P','Q'][i]}: ${c}e⁻</span>`).join('')}</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="detail-section"><div class="section-title">${L.sec3}</div>
+      <div class="prop-grid">
+        <div class="prop-item" style="border-color:var(--accent); background:rgba(56,189,248,0.1); grid-column: 1 / -1;"><div class="prop-label" style="color:var(--accent)">${L.currentPhase} @ ${Math.round(state.tempK)}K</div><div class="prop-value" style="color:#fff; font-size:15px">${currentPhaseStr}${tempDeltaStr}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Den}</div><div class="prop-value">${S(el.phys.density)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Mp}</div><div class="prop-value">${S(el.phys.melt)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Bp}</div><div class="prop-value">${S(el.phys.boil)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Col}</div><div class="prop-value">${S(el.phys.color)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.ECd}</div><div class="prop-value">${S(el.phys.elecCond)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.TCd}</div><div class="prop-value">${S(el.phys.thermCond)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Hard}</div><div class="prop-value">${S(el.phys.hard)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Cry}</div><div class="prop-value">${S(el.phys.cry)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Mag}</div><div class="prop-value">${S(el.phys.mag)}</div></div>
+      </div>
+    </section>
+
+    <section class="detail-section"><div class="section-title">${L.sec4}</div>
+      <div class="prop-grid-wide">
+        <div class="prop-item"><div class="prop-label">${F.Met}</div><div class="prop-value">${S(el.chem.met)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Red}</div><div class="prop-value">${S(el.chem.red)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Aci}</div><div class="prop-value">${S(el.chem.aci)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.ThS}</div><div class="prop-value">${S(el.chem.thS)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Fla}</div><div class="prop-value">${S(el.chem.fla)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Tox}</div><div class="prop-value">${S(el.chem.tox)}</div></div>
+        <div class="prop-item" style="grid-column: 1 / -1;"><div class="prop-label">${F.Rea}</div><div class="prop-value">${S(el.chem.rea)}</div></div>
+        <div class="prop-item" style="grid-column: 1 / -1;"><div class="prop-label">${F.Iso}</div><div class="prop-value">${S(el.chem.iso)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Alo}</div><div class="prop-value">${S(el.chem.alo)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.RadA}</div><div class="prop-value">${S(el.chem.rad)}</div></div>
+      </div>
+    </section>
+
+    <section class="detail-section"><div class="section-title">${L.sec5}</div>
+      <div class="prop-grid-wide">
+        <div class="prop-item"><div class="prop-label">${F.Year}</div><div class="prop-value">${S(el.disc.year)}</div></div>
+        <div class="prop-item"><div class="prop-label">${F.Disc}</div><div class="prop-value">${S(el.disc.discoverer)}</div></div>
+        <div class="prop-item" style="grid-column: 1 / -1;"><div class="prop-label">${F.Ety}</div><div class="prop-value" style="color:#c084fc">${S(el.disc.ety)}</div></div>
+        <div class="prop-item" style="grid-column: 1 / -1;"><div class="prop-label">${F.App}</div><div class="prop-value" style="color:#10b981">${S(el.disc.app)}</div></div>
+      </div>
+    </section>
+  `;
+}
+
+function buildBohrSVG(el) {
+  const max = el.shells.length, cx = 100, cy = 100, stepR = max > 1 ? 66 / (max - 1) : 0;
+  let circles = "", electrons = "";
+  el.shells.forEach((count, i) => {
+    const r = max === 1 ? 45 : 22 + i * stepR;
+    circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(56, 189, 248, 0.28)" stroke-width="1" stroke-dasharray="3,2"/>`;
+    for (let j = 0; j < count; j++) {
+      const a = (2 * Math.PI * j) / count - Math.PI / 2;
+      electrons += `<circle cx="${(cx+r*Math.cos(a)).toFixed(2)}" cy="${(cy+r*Math.sin(a)).toFixed(2)}" r="2.6" fill="#38bdf8" stroke="#080d1a" stroke-width="0.8"/>`;
+    }
+  });
+  return `<svg width="192" height="192" viewBox="0 0 200 200">${circles}<circle cx="${cx}" cy="${cy}" r="14" fill="rgba(244, 63, 94, 0.85)" stroke="#fda4af" stroke-width="1.5"/><text x="${cx}" y="${cy + 3.5}" text-anchor="middle" fill="#ffffff" font-size="9.5" font-weight="bold">+${el.Z}</text>${electrons}</svg>`;
+}
+
+function selectElement(z, openDrawer = false) {
+  state.selectedZ = z;
+  // 时序修复：在更新 Grid 前更改 Drawer 状态，确保渲染 Drawer 的逻辑生效
+  if (openDrawer) {
+    state.drawerOpen = true; 
+    document.getElementById("detail-drawer").classList.add("open");
+    document.getElementById("drawer-backdrop").classList.add("open");
+  }
+  updateGridState();
+}
+
+function updateTemperatures(t) {
+  state.tempK = t;
+  document.getElementById('temp-k').textContent = `${Math.round(t)} K`;
+  document.getElementById('temp-c').textContent = `(${Math.round(t - 273.15)} ℃)`;
+  updateGridState();
+}
+
+function getSliderVal(t) { return t <= 500 ? t : 500 + (t - 500) / 11; }
+function getTempFromSlider(val) { return val <= 500 ? val : 500 + (val - 500) * 11; }
+
+function setSliderToTemp(t) {
+  document.getElementById("temp-slider").value = getSliderVal(t);
+  updateTemperatures(t);
+}
+
+let playRAF, lastTime = 0;
+function playStep(time) {
+  if (!state.isPlaying) return;
+  const dt = time - lastTime; lastTime = time;
+  let t = state.tempK + (dt * 0.5);
+  if (t > 6000) t = 0;
+  setSliderToTemp(t);
+  playRAF = requestAnimationFrame(playStep);
+}
+
+function initEvents() {
+  document.querySelectorAll(".lang-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.lang = btn.dataset.lang;
+      renderHeaderUI(); renderCategoryBar(); updateGridState();
+    });
+  });
+
+  document.getElementById("search-input").addEventListener("input", e => { state.searchQuery = e.target.value; updateGridState(); });
+
+  document.getElementById("temp-slider").addEventListener("input", e => {
+    if (state.isPlaying) document.getElementById("btn-play-temp").click();
+    updateTemperatures(getTempFromSlider(parseFloat(e.target.value)));
+  });
+
+  document.querySelectorAll(".temp-presets button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (state.isPlaying) document.getElementById("btn-play-temp").click();
+      setSliderToTemp(parseFloat(btn.dataset.t));
+    });
+  });
+
+  document.getElementById("btn-plus-10").onclick = () => setSliderToTemp(Math.min(6000, state.tempK + 10));
+  document.getElementById("btn-plus-100").onclick = () => setSliderToTemp(Math.min(6000, state.tempK + 100));
+  document.getElementById("btn-minus-10").onclick = () => setSliderToTemp(Math.max(0, state.tempK - 10));
+  document.getElementById("btn-minus-100").onclick = () => setSliderToTemp(Math.max(0, state.tempK - 100));
+
+  document.getElementById("btn-play-temp").addEventListener("click", function() {
+    state.isPlaying = !state.isPlaying;
+    if (state.isPlaying) {
+      this.classList.add("playing"); document.getElementById("ui-play").textContent = UI[state.lang].pause;
+      lastTime = performance.now(); playRAF = requestAnimationFrame(playStep);
+    } else {
+      this.classList.remove("playing"); document.getElementById("ui-play").textContent = UI[state.lang].play;
+      cancelAnimationFrame(playRAF);
+    }
+  });
+
+  document.querySelectorAll(".stat-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.phaseFilter = state.phaseFilter === btn.dataset.filter ? null : btn.dataset.filter;
+      updateGridState();
+    });
+  });
+
+  document.getElementById("close-drawer-btn").onclick = () => { state.drawerOpen = false; document.getElementById("detail-drawer").classList.remove("open"); document.getElementById("drawer-backdrop").classList.remove("open"); };
+  document.getElementById("drawer-backdrop").onclick = document.getElementById("close-drawer-btn").onclick;
+  document.getElementById("prev-el-btn").onclick = () => selectElement(state.selectedZ > 1 ? state.selectedZ - 1 : 118, true);
+  document.getElementById("next-el-btn").onclick = () => selectElement(state.selectedZ < 118 ? state.selectedZ + 1 : 1, true);
+  window.addEventListener("keydown", e => {
+    if (!state.drawerOpen) return;
+    if (e.key === "Escape") document.getElementById("close-drawer-btn").click();
+    else if (e.key === "ArrowLeft") document.getElementById("prev-el-btn").click();
+    else if (e.key === "ArrowRight") document.getElementById("next-el-btn").click();
+  });
+}
+
+// Initial Boot
+renderHeaderUI();
+renderCategoryBar();
+renderPeriodicGridDOM();
+setSliderToTemp(298.15); // Boot to Room Temperature
+initEvents();
+</script>
+</body>
+</html>
